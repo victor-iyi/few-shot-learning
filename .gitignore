@@ -16,6 +16,7 @@ instance/
 # General
 .DS_Store
 .LSOverride
+__MACOSX
 
 # Icon must end with two \r
 Icon
