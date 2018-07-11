@@ -89,16 +89,13 @@ def load_image(path: str, dtype: np.dtype=np.float32,
 # Helper function to plot images and labels.
 
 
-def visualize(test_dir: str, train_dir: str=None, **kwargs):
+def visualize(run_dir: str, index: int=0, title: str='', **kwargs):
     """Visualize image groups with a matching 2 matching image.
 
     Args:
       test_dir (str): Test data directory.
-      train_dir (str, optional): Defaults to None. Training data directory.
 
     Keyword Args:
-      test_img (np.ndarray, optional): Defaults to None.
-      train_img (np.ndarray, optional): Defaults to None.
       smooth (bool, optional): Defaults to True.
       cmap (str, optional): Defaults to gray.
 
@@ -111,6 +108,31 @@ def visualize(test_dir: str, train_dir: str=None, **kwargs):
 
     smooth = kwargs.setdefault('smooth', True)
     cmap = kwargs.setdefault('cmap', 'gray')
+
+    # Run files and sub directories.
+    test_dir = os.path.join(run_dir, 'test')
+    train_dir = os.path.join(run_dir, 'training')
+    label_path = os.path.join(run_dir, 'class_labels.txt')
+
+    # Load images.
+    test = np.array([load_image(os.path.join(test_dir, f))
+                     for f in os.listdir(test_dir)])
+
+    train = np.array([load_image(os.path.join(train_dir, f))
+                      for f in os.listdir(train_dir)])
+
+    assert len(train) == len(test) == n_examples, \
+        '{}, {} and {} are not equal'.format(len(train), len(test), n_examples)
+
+    # Class labels.
+    with open(label_path, mode='r') as f:
+        class_labels = f.readlines()
+
+    # Get class label to focus on.
+    test_path, train_path = class_labels[index].split()
+
+    test_img = load_image(os.path.join(data_dir, test_path))
+    train_img = load_image(os.path.join(data_dir, train_path))
 
     # Remvoe arguments irrelevant for matplotlib.
     kwargs.pop("smooth")
@@ -125,16 +147,6 @@ def visualize(test_dir: str, train_dir: str=None, **kwargs):
         "interpolation": 'spline16' if smooth else 'nearest',
     })
 
-    # Load images.
-    test = np.array([load_image(os.path.join(test_dir, f))
-                     for f in os.listdir(test_dir)])
-
-    if test_dir is not None:
-        train = np.array([load_image(os.path.join(train_dir, f))
-                          for f in os.listdir(train_dir)])
-
-    assert len(train) == len(test) == 20, 'train & test must be same length.'
-
     # Entire figure.
     gs = gridspec.GridSpec(1, 2)
 
@@ -147,7 +159,10 @@ def visualize(test_dir: str, train_dir: str=None, **kwargs):
 
     # Matching train & test images.
     test_img_ax.imshow(test_img, **kwargs)
+    test_img_ax.set_xlabel('Test Handwriting')
+
     train_img_ax.imshow(train_img, **kwargs)
+    train_img_ax.set_xlabel('Class target')
 
     # Remove ticks.
     test_img_ax.set_xticks([])
@@ -162,6 +177,7 @@ def visualize(test_dir: str, train_dir: str=None, **kwargs):
     # Containing all images from test_dir.
     gs_imgs_test = gridspec.GridSpecFromSubplotSpec(n_rows, n_cols,
                                                     subplot_spec=gs_imgs[0])
+    # print(dir(gs_imgs_test.get_subplot_params()))
     # Containing all images from train_dir.
     gs_imgs_train = gridspec.GridSpecFromSubplotSpec(n_rows, n_cols,
                                                      subplot_spec=gs_imgs[1])
@@ -171,6 +187,7 @@ def visualize(test_dir: str, train_dir: str=None, **kwargs):
         for col in range(n_cols):
             ax_test = plt.subplot(gs_imgs_test[row, col])
             ax_test.imshow(test[idx], **kwargs)
+            # ax_test.set_title("Test images")
 
             ax_test.set_xticks([])
             ax_test.set_yticks([])
@@ -182,37 +199,8 @@ def visualize(test_dir: str, train_dir: str=None, **kwargs):
             ax_train.set_yticks([])
 
             idx += 1
-
-    # # Image dimensions.
-    # img_shape = train.shape
-    # img_batch, img_size = img_shape[0], img_shape[1]
-    # img_channel = img_shape[-3] if len(img_shape) > 3 else 1
-
-    # # Create figure with sub-plots.
-    # fig, axes = plt.subplots(5, 4)
-
-    # # Adjust vertical spacing if we need to print ensemble and best-net.
-    # wspace, hspace = 0.2, 0.4
-    # fig.subplots_adjust(hspace=hspace, wspace=wspace)
-
-    # for i, ax in enumerate(axes.flat):
-    #     # cmap type.
-    #     cmap = 'gray' if img_channel == 1 else None
-    #     # Interpolation type.
-    #     smooth = 'spline16' if smooth else 'nearest'
-
-    #     # Reshape image based on channel.
-    #     if img_channel == 1:
-    #         img = train[i].reshape(img_size, img_size)
-    #     else:
-    #         img = np.transpose(train[i], (1, 2, 0))
-
-    #     # Plot image.
-    #     ax.imshow(img, interpolation=smooth, cmap=cmap)
-
-    #     # Remove ticks from the plot.
-    #     ax.set_xticks([])
-    #     ax.set_yticks([])
+    # Entire figure's title.
+    plt.suptitle(title)
 
     # Ensure the plot is shown correctly with multiple plots
     # in a single Notebook cell.
@@ -250,9 +238,6 @@ def imshow(image: np.ndarray, title: str='', **kwargs):
 
 if __name__ == '__main__':
     run_dir = os.path.join(data_dir, 'run01')
-    test_dir = os.path.join(run_dir, 'test')
-    train_dir = os.path.join(run_dir, 'training')
-    label_path = os.path.join(run_dir, 'class_labels.txt')
 
     # test_file = 'all_runs/run01/test/item01.png'
     # train_file = 'all_runs/run01/training/class_labels.png'
@@ -260,16 +245,7 @@ if __name__ == '__main__':
     # imshow(image)
     # images = np.array([load_image(os.path.join(test_dir, f))
     #                    for f in os.listdir(test_dir)])
-    with open(label_path, mode='r') as f:
-        class_labels = f.readlines()
 
-    test_img_path, train_img_path = class_labels[0].split()
-
-    test_img_path = os.path.join(data_dir, test_img_path)
-    train_img_path = os.path.join(data_dir, train_img_path)
-
-    test_img = load_image(test_img_path)
-    train_img = load_image(train_img_path)
-
-    visualize(train_dir=train_dir, test_dir=test_dir,
-              test_img=test_img, train_img=train_img)
+    # visualize(train_dir=train_dir, test_dir=test_dir,
+    #           test_img=test_img, train_img=train_img)
+    visualize(run_dir, index=3, title='')
