@@ -268,6 +268,10 @@ def imshow(image: np.ndarray, title: str='', **kwargs):
 
 
 if __name__ == '__main__':
+    # Extracting files.
+    all_runs = os.path.join(compressed_dir, 'all_runs.zip')
+    extract(all_runs)
+
     # Visualize single image.
     # test_file = 'all_runs/run01/test/item01.png'
     # image = load_image(test_file)
@@ -276,5 +280,3 @@ if __name__ == '__main__':
     # Visualize single run.
     # run_dir = os.path.join(data_dir, 'all_runs/run01')
     # visualize_runs(run_dir, index=3, title='')
-    all_runs = os.path.join(compressed_dir, 'all_runs.zip')
-    extract(all_runs)
