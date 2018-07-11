@@ -29,9 +29,9 @@ from PIL import Image
 
 
 # Data directory.
-data_dir = 'datasets/'
-extracted_dir = os.path.join(data_dir, 'extracted')
-compressed_dir = os.path.join(data_dir, 'compressed')
+base_dir = 'datasets/'
+data_dir = os.path.join(base_dir, 'extracted')
+compressed_dir = os.path.join(base_dir, 'compressed')
 
 # Number of runs & example in each training, test folder.
 n_runs = n_examples = 20
@@ -43,23 +43,28 @@ def extract(path: str):
         raise FileNotFoundError('Could not find {}'.format(path))
 
     # Create extract directory if it doesn't exist.
-    if not os.path.isdir(extracted_dir):
-        os.makedirs(extracted_dir)
+    if not os.path.isdir(data_dir):
+        os.makedirs(data_dir)
 
     if zipfile.is_zipfile(path):
         # Extract zipped file.
         with zipfile.ZipFile(path, mode="r") as z:
-            z.extractall(extracted_dir)
+            z.extractall(data_dir)
     elif path.endswith((".tar.gz", ".tgz")):
         # Unpack tarball.
         with tarfile.open(path, mode="r:gz") as t:
-            t.extractall(extracted_dir)
+            t.extractall(data_dir)
     else:
         # Unrecognized compressed file.
         raise Exception('{} must a zipped or tarball file'.format(path))
 
-    print('Sucessfully extracted to {}'
-          .format(os.path.join(extracted_dir, os.path.basename(path).split('.')[0])))
+    # Retrive extracted directory.
+    extracted_dir = os.path.basename(path).split('.')[0]
+    extracted_dir = os.path.join(data_dir, extracted_dir)
+
+    # Display & return extracted directory.
+    print('Sucessfully extracted to {}'.format(extracted_dir))
+    return extracted_dir
 
 
 def load_image(path: str, dtype: np.dtype=np.float32,
@@ -278,5 +283,5 @@ if __name__ == '__main__':
     # imshow(image, title=test_file, smooth=True)
 
     # Visualize single run.
-    # run_dir = os.path.join(data_dir, 'all_runs/run01')
+    # run_dir = os.path.join(base_dir, 'all_runs/run01')
     # visualize_runs(run_dir, index=3, title='')
