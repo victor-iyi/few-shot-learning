@@ -34,4 +34,5 @@ Icon
 
 
 ### Project files
-datasets
+datasets/
+!datasets/compressed
