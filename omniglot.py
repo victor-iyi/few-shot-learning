@@ -187,7 +187,6 @@ def visualize(run_dir: str, index: int=0, title: str='', **kwargs):
         for col in range(n_cols):
             ax_test = plt.subplot(gs_imgs_test[row, col])
             ax_test.imshow(test[idx], **kwargs)
-            # ax_test.set_title("Test images")
 
             ax_test.set_xticks([])
             ax_test.set_yticks([])
@@ -210,11 +209,12 @@ def visualize(run_dir: str, index: int=0, title: str='', **kwargs):
 def imshow(image: np.ndarray, title: str='', **kwargs):
     # Extract default keyword arguments.
     cmap = kwargs.get('cmap') or 'gray'
-    smooth = kwargs.get('smooth', False)
-    show = kwargs.get('show', True)
+    smooth = kwargs.setdefault('smooth', False)
 
     # Interpolation type.
     smooth = 'spline16' if smooth else 'nearest'
+
+    kwargs.pop('smooth')
 
     # Update keyword arguments.
     kwargs.update({
@@ -232,20 +232,15 @@ def imshow(image: np.ndarray, title: str='', **kwargs):
     plt.yticks([])
 
     # Maybe show image.
-    if show:
-        plt.show()
+    plt.show()
 
 
 if __name__ == '__main__':
-    run_dir = os.path.join(data_dir, 'run01')
-
+    # Visualize single image.
     # test_file = 'all_runs/run01/test/item01.png'
-    # train_file = 'all_runs/run01/training/class_labels.png'
     # image = load_image(test_file)
-    # imshow(image)
-    # images = np.array([load_image(os.path.join(test_dir, f))
-    #                    for f in os.listdir(test_dir)])
+    # imshow(image, title=test_file, smooth=True)
 
-    # visualize(train_dir=train_dir, test_dir=test_dir,
-    #           test_img=test_img, train_img=train_img)
+    # Visualize single run.
+    run_dir = os.path.join(data_dir, 'run01')
     visualize(run_dir, index=3, title='')
