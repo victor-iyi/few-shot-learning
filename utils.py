@@ -14,10 +14,3 @@
      MIT License
      Copyright (c) 2018. Victor I. Afolabi. All rights reserved.
 """
-import pickle
-
-import numpy as np
-import matplotlib.pyplot as plt
-
-
-            

@@ -27,7 +27,7 @@ from PIL import Image
 
 
 # Data directory.
-data_dir = 'all_runs/'
+data_dir = 'datasets/'
 
 # Number of runs & example in each training, test folder.
 n_runs = n_examples = 20
@@ -130,9 +130,12 @@ def visualize(run_dir: str, index: int=0, title: str='', **kwargs):
 
     # Get class label to focus on.
     test_path, train_path = class_labels[index].split()
+    test_path = os.path.join(os.path.dirname(run_dir), test_path)
+    train_path = os.path.join(os.path.dirname(run_dir), train_path)
 
-    test_img = load_image(os.path.join(data_dir, test_path))
-    train_img = load_image(os.path.join(data_dir, train_path))
+    # Load emphasized images.
+    test_img = load_image(test_path)
+    train_img = load_image(train_path)
 
     # Remvoe arguments irrelevant for matplotlib.
     kwargs.pop("smooth")
@@ -242,5 +245,5 @@ if __name__ == '__main__':
     # imshow(image, title=test_file, smooth=True)
 
     # Visualize single run.
-    run_dir = os.path.join(data_dir, 'run01')
+    run_dir = os.path.join(data_dir, 'all_runs/run01')
     visualize(run_dir, index=3, title='')
