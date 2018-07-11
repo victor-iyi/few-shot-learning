@@ -89,7 +89,7 @@ def load_image(path: str, dtype: np.dtype=np.float32,
 # Helper function to plot images and labels.
 
 
-def visualize(run_dir: str, index: int=0, title: str='', **kwargs):
+def visualize_runs(run_dir: str, index: int=0, title: str='', **kwargs):
     """Visualize image groups with a matching 2 matching image.
 
     Args:
@@ -246,4 +246,4 @@ if __name__ == '__main__':
 
     # Visualize single run.
     run_dir = os.path.join(data_dir, 'all_runs/run01')
-    visualize(run_dir, index=3, title='')
+    visualize_runs(run_dir, index=3, title='')
