@@ -18,6 +18,8 @@
      Copyright (c) 2018. Victor I. Afolabi. All rights reserved.
 """
 import os
+import zipfile
+import tarfile
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -28,9 +30,36 @@ from PIL import Image
 
 # Data directory.
 data_dir = 'datasets/'
+extracted_dir = os.path.join(data_dir, 'extracted')
+compressed_dir = os.path.join(data_dir, 'compressed')
 
 # Number of runs & example in each training, test folder.
 n_runs = n_examples = 20
+
+
+def extract(path: str):
+    # Ensure the file exists.
+    if not os.path.isfile(path):
+        raise FileNotFoundError('Could not find {}'.format(path))
+
+    # Create extract directory if it doesn't exist.
+    if not os.path.isdir(extracted_dir):
+        os.makedirs(extracted_dir)
+
+    if zipfile.is_zipfile(path):
+        # Extract zipped file.
+        with zipfile.ZipFile(path, mode="r") as z:
+            z.extractall(extracted_dir)
+    elif path.endswith((".tar.gz", ".tgz")):
+        # Unpack tarball.
+        with tarfile.open(path, mode="r:gz") as t:
+            t.extractall(extracted_dir)
+    else:
+        # Unrecognized compressed file.
+        raise Exception('{} must a zipped or tarball file'.format(path))
+
+    print('Sucessfully extracted to {}'
+          .format(os.path.join(extracted_dir, os.path.basename(path).split('.')[0])))
 
 
 def load_image(path: str, dtype: np.dtype=np.float32,
@@ -245,5 +274,7 @@ if __name__ == '__main__':
     # imshow(image, title=test_file, smooth=True)
 
     # Visualize single run.
-    run_dir = os.path.join(data_dir, 'all_runs/run01')
-    visualize_runs(run_dir, index=3, title='')
+    # run_dir = os.path.join(data_dir, 'all_runs/run01')
+    # visualize_runs(run_dir, index=3, title='')
+    all_runs = os.path.join(compressed_dir, 'all_runs.zip')
+    extract(all_runs)
