@@ -68,13 +68,21 @@ class SiameseNetwork(keras.Model):
                                               activation=keras.activations.sigmoid)
 
     def call(self, inputs, **kwargs):
-        """Forward propagation step of Siamese Network.
+        """Calls the model on new inputs.
 
-        Args:
-            inputs (tf.Tensor or np.ndarray): Batch input images.
+        In this case `call` just reapplies all ops in the graph to the new inputs
+        (e.g. build a new computational graph from the provided inputs).
+
+        Arguments:
+            inputs: A tensor or list of tensors.
+            training: Boolean or boolean scalar tensor, indicating whether to run
+            the `Network` in training mode or inference mode.
+            mask: A mask or list of masks. A mask can be
+                either a tensor or None (no mask).
 
         Returns:
-            tf.Tensor: Probability of image...
+            A tensor if there is a single output, or
+            a list of tensors if there are more than one outputs.
         """
 
         # Input layer.
