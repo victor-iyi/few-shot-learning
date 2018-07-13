@@ -176,7 +176,7 @@ def visualize_runs(run_dir: str, index: int=0, title: str='', **kwargs):
     kwargs.pop("test_img")
     kwargs.pop("train_img")
 
-    # Update keyword arguments for matplotlib.
+    # Update keyword arguments by matplotlib.
     kwargs.update({
         # CMap.
         "cmap": cmap,
@@ -214,7 +214,7 @@ def visualize_runs(run_dir: str, index: int=0, title: str='', **kwargs):
     # Containing all images from test_dir.
     gs_imgs_test = gridspec.GridSpecFromSubplotSpec(n_rows, n_cols,
                                                     subplot_spec=gs_imgs[0])
-    # print(dir(gs_imgs_test.get_subplot_params()))
+
     # Containing all images from train_dir.
     gs_imgs_train = gridspec.GridSpecFromSubplotSpec(n_rows, n_cols,
                                                      subplot_spec=gs_imgs[1])
@@ -240,6 +240,59 @@ def visualize_runs(run_dir: str, index: int=0, title: str='', **kwargs):
 
     # Ensure the plot is shown correctly with multiple plots
     # in a single Notebook cell.
+    plt.show()
+
+
+def visualize_symbols(symbol_dir: str, **kwargs):
+    if not os.path.isdir(symbol_dir):
+        raise FileNotFoundError(f'{symbol_dir} is not a valid directory!')
+
+    # Extract keyword arguments.
+    smooth = kwargs.setdefault('smooth', True)
+    cmap = kwargs.setdefault('cmap', 'gray')
+
+    # Interpolation type.
+    smooth = 'spline16' if smooth else 'nearest'
+
+    # Remove arguments irrelevant for matplotlib.
+    kwargs.pop('smooth')
+
+    # Arguments used by matplotlib.
+    kwargs.update({'interpolation': smooth})
+
+    # Get the symbol name.
+    title = os.path.basename(symbol_dir).replace('_', ' ')
+
+    # List of characters.
+    chars = (os.path.join(symbol_dir, c)
+             for c in os.listdir(symbol_dir) if c[0] is not '.')
+
+    # Pick one character at random for each classes.
+    img_paths = (os.path.join(ch, os.listdir(ch)[np.random.choice(n_examples)])
+                 for ch in chars)
+
+    # Load images.
+    images = [load_image(p) for p in img_paths]
+
+    # Visualize images.
+
+    # Create figure with sub-plots.
+    fig, axes = plt.subplots(5, 4)
+
+    # Adjust vertical spacing.
+    fig.subplots_adjust(hspace=0.4, wspace=0.2)
+
+    # Plot images.
+    for i, ax in enumerate(axes.flat):
+        # Plot image on current axis.
+        ax.imshow(images[i], **kwargs)
+
+        # Remove x & y ticks.
+        ax.set_xticks([])
+        ax.set_yticks([])
+
+    # Set plot's title & show figure.
+    plt.suptitle(title)
     plt.show()
 
 
@@ -274,8 +327,12 @@ def imshow(image: np.ndarray, title: str='', **kwargs):
 
 if __name__ == '__main__':
     # Extracting files.
-    all_runs = os.path.join(compressed_dir, 'all_runs.zip')
-    extract(all_runs)
+    # data_path = os.path.join(compressed_dir, 'images_background.zip')
+    # data_path = extract(data_path)
+    # print(f'Data path {data_path}')
+
+    data_path = 'datasets/extracted/images_background/Armenian'
+    visualize_symbols(data_path)
 
     # Visualize single image.
     # test_file = 'all_runs/run01/test/item01.png'
