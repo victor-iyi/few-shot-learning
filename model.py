@@ -1,7 +1,7 @@
 """Helper class for building Siamese model for One-shot learning.
 
-  @description
-    For visualizing, pre-processing and loading the Omniglot dataset.
+   @description
+     For visualizing, pre-processing and loading the Omniglot dataset.
 
    @author
      Victor I. Afolabi
@@ -67,6 +67,9 @@ class SiameseNetwork(keras.Model):
         self.probability = keras.layers.Dense(units=self.num_classes,
                                               activation=keras.activations.sigmoid)
 
+    def __repr__(self):
+        return f'models.SiameseNetwork(num_classes={self.num_classes})'
+
     def call(self, inputs, **kwargs):
         """Calls the model on new inputs.
 
@@ -104,3 +107,8 @@ class SiameseNetwork(keras.Model):
         shape = tf.TensorShape(input_shape).as_list()
         shape[-1] = self.num_classes
         return tf.TensorShape(shape)
+
+
+if __name__ == '__main__':
+    net = SiameseNetwork(num_classes=1)
+    print(net)
