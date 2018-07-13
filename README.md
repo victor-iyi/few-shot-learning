@@ -1,10 +1,14 @@
 # Few Shot Learning
 
-The hipes in Deep Learning is centered around the fact that we have cleanly labelled dataset with lots and lots of training dataset. In real world –that's not the case. Also, if I you've never seen a bannana before and I show you one single picture of a bannana –you're very likely when shown another image containing bannana to say *That's a bannana*. This is not the case with Deep Learning as we need to show them a few thousands or even millions of bannana for them to be able to guess with good accuracy.
+The process of learning good features for machine learning applications can be very computationally expensive and may prove difficult in cases where little data is available. A prototypical example of this is the one-shot learning setting, in which we must correctly make predictions given only a single example of each new class.
+I explored a method for learning Siamese Neural Networks which employ a unique structure to naturally rank similarity between inputs. Once a network has been tuned, we can then capitalize on powerful discriminative features to generalize the predictive power of the network not just to new data, but to entirely new classes from unknown distributions. Using a convolutional architecture, we are able to achieve strong results which exceed those of other deep learning models with near *state-of-the-art* performance on one-shot classification tasks.
+Here, I explored the power of One-Shot Learning with a popular network called "**Siamese Neural Network**".
 
-Here, I explored the power of One-Shot Learning with a popular network called **"Siamese Neural Network"**.
+## Architecture
 
-# Credits
+![Siamese Network](images/Siamese%20Network.png)
+
+## Credits
 
 - Omniglot Dataset
-- Fellowship.ai
+- Fellowship&period;ai

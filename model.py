@@ -59,7 +59,7 @@ class SiameseNetwork(keras.Model):
                                          activation=keras.activations.relu)
         self.pool4 = keras.layers.MaxPool2D(pool_size=(2, 2))
 
-        # 5th layer (9216x4096)
+        # 5th layer (9216x4096) -Distance layer.
         self.dense = keras.layers.Dense(units=4096,
                                         activation=keras.activations.sigmoid)
 
