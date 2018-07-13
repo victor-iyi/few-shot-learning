@@ -37,308 +37,281 @@ compressed_dir = os.path.join(base_dir, 'compressed')
 n_runs = n_examples = 20
 
 
-def extract(path: str):
-    # Ensure the file exists.
-    if not os.path.isfile(path):
-        raise FileNotFoundError('Could not find {}'.format(path))
-
-    # Create extract directory if it doesn't exist.
-    if not os.path.isdir(data_dir):
-        os.makedirs(data_dir)
-
-    if zipfile.is_zipfile(path):
-        # Extract zipped file.
-        with zipfile.ZipFile(path, mode="r") as z:
-            z.extractall(data_dir)
-    elif path.endswith((".tar.gz", ".tgz")):
-        # Unpack tarball.
-        with tarfile.open(path, mode="r:gz") as t:
-            t.extractall(data_dir)
-    else:
-        # Unrecognized compressed file.
-        raise Exception('{} must a zipped or tarball file'.format(path))
-
-    # Retrive extracted directory.
-    extracted_dir = os.path.basename(path).split('.')[0]
-    extracted_dir = os.path.join(data_dir, extracted_dir)
-
-    # Display & return extracted directory.
-    print('Sucessfully extracted to {}'.format(extracted_dir))
-    return extracted_dir
-
-
-def load_image(path: str, dtype: np.dtype=np.float32,
-               size: tuple=None, flatten: bool=False,
-               grayscale: bool=False):
-    """Load image pas a numpy array.
-
-    Args:
-      path (str): Path to image to be loaded.
-      dtype (np.dtype, optional): Defaults to np.float32. NumPy array data type.
-      size (tuple, None): Defaults to None. Image resize dimension.
-      flatten (bool, optional): Defaults to False. Maybe flatten image.
-      grayscale (bool, optional): Defaults to False. Convert image to grayscale or not.
-
-    Raises:
-      ImportError: Please make sure you have Pillow installed.
-          Run `pip3 install Pillow` to install Pillow.
-
-      FileNotFoundError: `path` was not found!
-          Double check file path to make sure it exits, or
-          use guard checks like `os.path.isfile(path)`
-
-    Returns:
-      array-like: Image as a numpy array with dimension 2D or 3D array
-          *(-if image is colored or grayscale image)*.
-          If `flatten` is True. Returns a 1D-array.
-    """
-    try:
-        # Open image as a Pillow object.
-        image = Image.open(path)
-
-        # Resize image.
-        if size is not None:
-            image = image.resize(size)
-
-        # Convert image to grayscale.
-        if grayscale:
-            image = image.convert('L')
-
-    except ImportError:
-        raise ImportError('Please make sure you have Pillow installed.')
-    except FileNotFoundError:
-        raise FileNotFoundError('{} was not found!'.format(path))
-    except Exception as e:
-        raise Exception('ERROR: {}'.format(e))
-
-    # Convert Pillow object to NumPy array.
-    image = np.array(image, dtype=dtype)
-
-    if flatten:
-        # Flatten image.
-        image = image.ravel()
-
-    return image
-
-# Helper function to plot images and labels.
-
-
-def visualize_runs(run_dir: str, index: int=0, title: str='', **kwargs):
-    """Visualize image groups with a matching 2 matching image.
-
-    Args:
-      test_dir (str): Test data directory.
-
-    Keyword Args:
-      smooth (bool, optional): Defaults to True.
-      cmap (str, optional): Defaults to gray.
-
-      See `plt.imshow`
-    """
-
-    # Keyword arguments.
-    test_img = kwargs.setdefault('test_img', None)
-    train_img = kwargs.setdefault('train_img', None)
-
-    smooth = kwargs.setdefault('smooth', True)
-    cmap = kwargs.setdefault('cmap', 'gray')
-
-    # Run files and sub directories.
-    test_dir = os.path.join(run_dir, 'test')
-    train_dir = os.path.join(run_dir, 'training')
-    label_path = os.path.join(run_dir, 'class_labels.txt')
+class Visualize(object):
+
+    @staticmethod
+    def image(image: np.ndarray, title: str, **kwargs):
+        # Extract default keyword arguments.
+        kwargs.setdefault('cmap', 'gray')
+        smooth = kwargs.setdefault('smooth', False)
+
+        # Interpolation type.
+        smooth = 'spline16' if smooth else 'nearest'
+
+        # Update keyword arguments.
+        kwargs.pop('smooth')
+        kwargs.update({"interpolation": smooth})
 
-    # Load images.
-    test = np.array([load_image(os.path.join(test_dir, f))
-                     for f in os.listdir(test_dir)])
+        # Add image to plot.
+        plt.imshow(image, **kwargs)
 
-    train = np.array([load_image(os.path.join(train_dir, f))
-                      for f in os.listdir(train_dir)])
+        # Image title.
+        plt.title(title)
 
-    assert len(train) == len(test) == n_examples, \
-        '{}, {} and {} are not equal'.format(len(train), len(test), n_examples)
+        # Remove ticks from the plot.
+        plt.xticks([])
+        plt.yticks([])
 
-    # Class labels.
-    with open(label_path, mode='r') as f:
-        class_labels = f.readlines()
+        # Maybe show image.
+        plt.show()
 
-    # Get class label to focus on.
-    test_path, train_path = class_labels[index].split()
-    test_path = os.path.join(os.path.dirname(run_dir), test_path)
-    train_path = os.path.join(os.path.dirname(run_dir), train_path)
+    @staticmethod
+    def runs(directory: str, index: int=1, title: str='', **kwargs):
+        # Keyword arguments.
+        kwargs.setdefault('cmap', 'gray')
+        smooth = kwargs.setdefault('smooth', True)
+
+        # Update keyword arguments by matplotlib.
+        kwargs.pop("smooth")
+        kwargs.update({"interpolation": 'spline16' if smooth else 'nearest'})
+
+        # Run files and sub directories.
+        test_dir = os.path.join(directory, 'test')
+        train_dir = os.path.join(directory, 'training')
+        label_path = os.path.join(directory, 'class_labels.txt')
 
-    # Load emphasized images.
-    test_img = load_image(test_path)
-    train_img = load_image(train_path)
+        # Load images.
+        test = np.array([Data.load_image(os.path.join(test_dir, f))
+                         for f in os.listdir(test_dir) if f[0] is not '.'])
 
-    # Remvoe arguments irrelevant for matplotlib.
-    kwargs.pop("smooth")
-    kwargs.pop("test_img")
-    kwargs.pop("train_img")
+        train = np.array([Data.load_image(os.path.join(train_dir, f))
+                          for f in os.listdir(train_dir) if f[0] is not '.'])
 
-    # Update keyword arguments by matplotlib.
-    kwargs.update({
-        # CMap.
-        "cmap": cmap,
-        # Adjust smoothing interpolation.
-        "interpolation": 'spline16' if smooth else 'nearest',
-    })
+        assert len(train) == len(test) == n_examples, \
+            '{}, {} and {} are not equal'.format(
+                len(train), len(test), n_examples)
 
-    # Entire figure.
-    gs = gridspec.GridSpec(1, 2)
+        # Class labels.
+        with open(label_path, mode='r') as f:
+            class_labels = f.readlines()
 
-    # Containing train_img and test_img.
-    gs_label = gridspec.GridSpecFromSubplotSpec(2, 1, subplot_spec=gs[0])
+        # Get class label to focus on.
+        test_path, train_path = class_labels[index].split()
+        test_path = os.path.join(os.path.dirname(directory), test_path)
+        train_path = os.path.join(os.path.dirname(directory), train_path)
 
-    # Containing matching images from train_img & test_img.
-    test_img_ax = plt.subplot(gs_label[0, 0])
-    train_img_ax = plt.subplot(gs_label[1, 0])
+        # Load emphasized images.
+        test_img = Data.load_image(test_path)
+        train_img = Data.load_image(train_path)
 
-    # Matching train & test images.
-    test_img_ax.imshow(test_img, **kwargs)
-    test_img_ax.set_xlabel('Test Handwriting')
+        # Entire figure.
+        gs = gridspec.GridSpec(1, 2)
 
-    train_img_ax.imshow(train_img, **kwargs)
-    train_img_ax.set_xlabel('Class target')
+        # Containing train_img and test_img.
+        gs_label = gridspec.GridSpecFromSubplotSpec(2, 1, subplot_spec=gs[0])
 
-    # Remove ticks.
-    test_img_ax.set_xticks([])
-    test_img_ax.set_yticks([])
-    train_img_ax.set_xticks([])
-    train_img_ax.set_yticks([])
+        # Containing matching images from train_img & test_img.
+        test_img_ax = plt.subplot(gs_label[0, 0])
+        train_img_ax = plt.subplot(gs_label[1, 0])
 
-    # Containing all images from train_dir and test_dir
-    gs_imgs = gridspec.GridSpecFromSubplotSpec(2, 1, subplot_spec=gs[1])
+        # Matching train & test images.
+        test_img_ax.imshow(test_img, **kwargs)
+        test_img_ax.set_xlabel('Test Handwriting')
 
-    n_rows, n_cols = 5, 4
-    # Containing all images from test_dir.
-    gs_imgs_test = gridspec.GridSpecFromSubplotSpec(n_rows, n_cols,
-                                                    subplot_spec=gs_imgs[0])
+        train_img_ax.imshow(train_img, **kwargs)
+        train_img_ax.set_xlabel('Class target')
 
-    # Containing all images from train_dir.
-    gs_imgs_train = gridspec.GridSpecFromSubplotSpec(n_rows, n_cols,
-                                                     subplot_spec=gs_imgs[1])
+        # Remove ticks.
+        test_img_ax.set_xticks([])
+        test_img_ax.set_yticks([])
+        train_img_ax.set_xticks([])
+        train_img_ax.set_yticks([])
 
-    idx = 0
-    for row in range(n_rows):
-        for col in range(n_cols):
-            ax_test = plt.subplot(gs_imgs_test[row, col])
-            ax_test.imshow(test[idx], **kwargs)
+        # Containing all images from train_dir and test_dir
+        gs_imgs = gridspec.GridSpecFromSubplotSpec(2, 1, subplot_spec=gs[1])
 
-            ax_test.set_xticks([])
-            ax_test.set_yticks([])
+        n_rows, n_cols = 5, 4
+        # Containing all images from test_dir.
+        gs_imgs_test = gridspec.GridSpecFromSubplotSpec(n_rows, n_cols,
+                                                        subplot_spec=gs_imgs[0])
+
+        # Containing all images from train_dir.
+        gs_imgs_train = gridspec.GridSpecFromSubplotSpec(n_rows, n_cols,
+                                                         subplot_spec=gs_imgs[1])
+
+        idx = 0
+        for row in range(n_rows):
+            for col in range(n_cols):
+                ax_test = plt.subplot(gs_imgs_test[row, col])
+                ax_test.imshow(test[idx], **kwargs)
 
-            ax_train = plt.subplot(gs_imgs_train[row, col])
-            ax_train.imshow(train[idx], **kwargs)
-
-            ax_train.set_xticks([])
-            ax_train.set_yticks([])
-
-            idx += 1
-    # Entire figure's title.
-    plt.suptitle(title)
-
-    # Ensure the plot is shown correctly with multiple plots
-    # in a single Notebook cell.
-    plt.show()
-
-
-def visualize_symbols(symbol_dir: str, **kwargs):
-    if not os.path.isdir(symbol_dir):
-        raise FileNotFoundError(f'{symbol_dir} is not a valid directory!')
-
-    # Extract keyword arguments.
-    smooth = kwargs.setdefault('smooth', True)
-    cmap = kwargs.setdefault('cmap', 'gray')
-
-    # Interpolation type.
-    smooth = 'spline16' if smooth else 'nearest'
-
-    # Remove arguments irrelevant for matplotlib.
-    kwargs.pop('smooth')
-
-    # Arguments used by matplotlib.
-    kwargs.update({'interpolation': smooth})
-
-    # Get the symbol name.
-    title = os.path.basename(symbol_dir).replace('_', ' ')
-
-    # List of characters.
-    chars = (os.path.join(symbol_dir, c)
-             for c in os.listdir(symbol_dir) if c[0] is not '.')
-
-    # Pick one character at random for each classes.
-    img_paths = (os.path.join(ch, os.listdir(ch)[np.random.choice(n_examples)])
-                 for ch in chars)
-
-    # Load images.
-    images = [load_image(p) for p in img_paths]
-
-    # Visualize images.
-
-    # Create figure with sub-plots.
-    fig, axes = plt.subplots(5, 4)
-
-    # Adjust vertical spacing.
-    fig.subplots_adjust(hspace=0.4, wspace=0.2)
-
-    # Plot images.
-    for i, ax in enumerate(axes.flat):
-        # Plot image on current axis.
-        ax.imshow(images[i], **kwargs)
-
-        # Remove x & y ticks.
-        ax.set_xticks([])
-        ax.set_yticks([])
-
-    # Set plot's title & show figure.
-    plt.suptitle(title)
-    plt.show()
-
-
-def imshow(image: np.ndarray, title: str='', **kwargs):
-    # Extract default keyword arguments.
-    cmap = kwargs.get('cmap') or 'gray'
-    smooth = kwargs.setdefault('smooth', False)
-
-    # Interpolation type.
-    smooth = 'spline16' if smooth else 'nearest'
-
-    kwargs.pop('smooth')
-
-    # Update keyword arguments.
-    kwargs.update({
-        "cmap": cmap, "interpolation": smooth
-    })
-
-    # Add image to plot.
-    plt.imshow(image, **kwargs)
-
-    # Image title.
-    plt.title(title)
-
-    # Remove ticks from the plot.
-    plt.xticks([])
-    plt.yticks([])
-
-    # Maybe show image.
-    plt.show()
+                ax_test.set_xticks([])
+                ax_test.set_yticks([])
+
+                ax_train = plt.subplot(gs_imgs_train[row, col])
+                ax_train.imshow(train[idx], **kwargs)
+
+                ax_train.set_xticks([])
+                ax_train.set_yticks([])
+
+                idx += 1
+        # Entire figure's title.
+        plt.suptitle(title)
+
+        # Ensure the plot is shown correctly with multiple plots
+        # in a single Notebook cell.
+        plt.show()
+
+    @staticmethod
+    def symbols(directory: str, **kwargs):
+        if not os.path.isdir(directory):
+            raise FileNotFoundError(f'{directory} is not a valid directory!')
+
+        # Extract keyword arguments.
+        smooth = kwargs.setdefault('smooth', True)
+        cmap = kwargs.setdefault('cmap', 'gray')
+
+        # Arguments used by matplotlib.
+        kwargs.pop('smooth')
+        kwargs.update({'interpolation': 'spline16' if smooth else 'nearest'})
+
+        # Get the symbol name.
+        title = os.path.basename(directory).replace('_', ' ')
+
+        # List of characters.
+        chars = (os.path.join(directory, c)
+                 for c in os.listdir(directory) if c[0] is not '.')
+
+        # Pick one character at random for each classes.
+        img_paths = (os.path.join(ch, os.listdir(ch)[np.random.choice(n_examples)])
+                     for ch in chars)
+
+        # Load images.
+        images = [Data.load_image(p) for p in img_paths]
+
+        # Visualize images.
+
+        # Create figure with sub-plots.
+        fig, axes = plt.subplots(5, 4)
+
+        # Adjust vertical spacing.
+        fig.subplots_adjust(hspace=0.4, wspace=0.2)
+
+        # Plot images.
+        for i, ax in enumerate(axes.flat):
+            # Plot image on current axis.
+            ax.imshow(images[i], **kwargs)
+
+            # Remove x & y ticks.
+            ax.set_xticks([])
+            ax.set_yticks([])
+
+        # Set plot's title & show figure.
+        plt.suptitle(title)
+        plt.show()
+
+
+class Data(object):
+
+    @staticmethod
+    def extract(path: str):
+        # Ensure the file exists.
+        if not os.path.isfile(path):
+            raise FileNotFoundError('Could not find {}'.format(path))
+
+        # Create extract directory if it doesn't exist.
+        if not os.path.isdir(data_dir):
+            os.makedirs(data_dir)
+
+        if zipfile.is_zipfile(path):
+            # Extract zipped file.
+            with zipfile.ZipFile(path, mode="r") as z:
+                z.extractall(data_dir)
+        elif path.endswith((".tar.gz", ".tgz")):
+            # Unpack tarball.
+            with tarfile.open(path, mode="r:gz") as t:
+                t.extractall(data_dir)
+        else:
+            # Unrecognized compressed file.
+            raise Exception('{} must a zipped or tarball file'.format(path))
+
+        # Retrive extracted directory.
+        extracted_dir = os.path.basename(path).split('.')[0]
+        extracted_dir = os.path.join(data_dir, extracted_dir)
+
+        # Display & return extracted directory.
+        print('Sucessfully extracted to {}'.format(extracted_dir))
+        return extracted_dir
+
+    @staticmethod
+    def load_image(path: str, dtype: np.dtype=np.float32,
+                   size: tuple=None, flatten: bool=False,
+                   grayscale: bool=False):
+        """Load image pas a numpy array.
+
+        Args:
+        path (str): Path to image to be loaded.
+        dtype (np.dtype, optional): Defaults to np.float32. NumPy array data type.
+        size (tuple, None): Defaults to None. Image resize dimension.
+        flatten (bool, optional): Defaults to False. Maybe flatten image.
+        grayscale (bool, optional): Defaults to False. Convert image to grayscale or not.
+
+        Raises:
+        ImportError: Please make sure you have Pillow installed.
+            Run `pip3 install Pillow` to install Pillow.
+
+        FileNotFoundError: `path` was not found!
+            Double check file path to make sure it exits, or
+            use guard checks like `os.path.isfile(path)`
+
+        Returns:
+        array-like: Image as a numpy array with dimension 2D or 3D array
+            *(-if image is colored or grayscale image)*.
+            If `flatten` is True. Returns a 1D-array.
+        """
+        try:
+            # Open image as a Pillow object.
+            image = Image.open(path)
+
+            # Resize image.
+            if size is not None:
+                image = image.resize(size)
+
+            # Convert image to grayscale.
+            if grayscale:
+                image = image.convert('L')
+
+        except ImportError:
+            raise ImportError('Please make sure you have Pillow installed.')
+        except FileNotFoundError:
+            raise FileNotFoundError('{} was not found!'.format(path))
+        except Exception as e:
+            raise Exception('ERROR: {}'.format(e))
+
+        # Convert Pillow object to NumPy array.
+        image = np.array(image, dtype=dtype)
+
+        if flatten:
+            # Flatten image.
+            image = image.ravel()
+
+        return image
 
 
 if __name__ == '__main__':
     # Extracting files.
-    # data_path = os.path.join(compressed_dir, 'images_background.zip')
-    # data_path = extract(data_path)
-    # print(f'Data path {data_path}')
+    data_path = os.path.join(compressed_dir, 'all_runs.tar.gz')
+    data_path = Data.extract(data_path)
+    Visualize.runs(data_path + '/run01', index=3)
 
-    data_path = 'datasets/extracted/images_background/Armenian'
-    visualize_symbols(data_path)
+    # data_path = 'datasets/extracted/images_background/Armenian'
+    # Visualize.symbols(data_path)
 
     # Visualize single image.
-    # test_file = 'all_runs/run01/test/item01.png'
-    # image = load_image(test_file)
-    # imshow(image, title=test_file, smooth=True)
+    # image = Data.load_image(os.path.join(data_dir,
+    #                                      'all_runs/run01/test/item01.png'))
+    # Visualize.image(image, title='Single Handwriting')
 
     # Visualize single run.
-    # run_dir = os.path.join(base_dir, 'all_runs/run01')
-    # visualize_runs(run_dir, index=3, title='')
+    # run_dir = os.path.join(data_dir, 'all_runs/run01')
+    # Visualize.runs(run_dir, index=3)
