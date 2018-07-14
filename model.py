@@ -133,7 +133,6 @@ class SiameseNetwork(keras.Model):
 
 if __name__ == '__main__':
     net = SiameseNetwork(num_classes=1)
-    x = np.array([])
 
     net.compile(optimizer=keras.optimizers.Adam(lr=1e-3),
                 loss=keras.losses.binary_crossentropy,
