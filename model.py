@@ -20,6 +20,7 @@
 import tensorflow as tf
 
 from tensorflow import keras
+import numpy as np
 
 
 class SiameseNetwork(keras.Model):
@@ -41,31 +42,39 @@ class SiameseNetwork(keras.Model):
 
         # 1st layer (64@10x10)
         self.conv1 = keras.layers.Conv2D(filters=64, kernel_size=(10, 10),
+                                         kernel_regularizer=keras.regularizers.l2,
                                          activation=keras.activations.relu)
         self.pool1 = keras.layers.MaxPool2D(pool_size=(2, 2))
 
         # 2nd layer (128@7x7)
         self.conv2 = keras.layers.Conv2D(filters=128, kernel_size=(7, 7),
+                                         kernel_regularizer=keras.regularizers.l2,
                                          activation=tf.keras.activations.relu)
         self.pool2 = keras.layers.MaxPool2D(pool_size=(2, 2))
 
         # 3rd layer (128@4x4)
         self.conv3 = keras.layers.Conv2D(filters=128, kernel_size=(4, 4),
+                                         kernel_regularizer=keras.regularizers.l2,
                                          activation=keras.activations.relu)
         self.pool3 = keras.layers.MaxPool2D(pool_size=(2, 2))
 
         # 4th layer (265@4x4)
         self.conv4 = keras.layers.Conv2D(filters=256, kernel_size=(4, 4),
+                                         kernel_regularizer=keras.regularizers.l2,
                                          activation=keras.activations.relu)
         self.pool4 = keras.layers.MaxPool2D(pool_size=(2, 2))
 
-        # 5th layer (9216x4096) -Distance layer.
+        # 5th layer  (9216x4096)
+        self.flatten = keras.layers.Flatten()
         self.dense = keras.layers.Dense(units=4096,
                                         activation=keras.activations.sigmoid)
 
+        # 6th - L1 layer -distance layer.
+        self.l1 = keras.layers.Lambda(lambda x: tf.abs(x[0] - x[1]))
+
         # Output layer (4096x1)
-        self.probability = keras.layers.Dense(units=self.num_classes,
-                                              activation=keras.activations.sigmoid)
+        self.prediction = keras.layers.Dense(units=self.num_classes,
+                                             activation=keras.activations.sigmoid)
 
     def __repr__(self):
         return f'models.SiameseNetwork(num_classes={self.num_classes})'
@@ -88,18 +97,31 @@ class SiameseNetwork(keras.Model):
             a list of tensors if there are more than one outputs.
         """
 
-        # Input layer.
-        x = self.input_layer(inputs)
+        def encoder(x):
+            # Input layer.
+            x = self.input_layer(inputs)
 
-        # Convolutional blocks.
-        x = self.pool1(self.conv1(x))
-        x = self.pool2(self.conv2(x))
-        x = self.pool3(self.conv3(x))
-        x = self.pool4(self.conv4(x))
+            # Convolutional blocks.
+            x = self.pool1(self.conv1(x))
+            x = self.pool2(self.conv2(x))
+            x = self.pool3(self.conv3(x))
+            x = self.pool4(self.conv4(x))
 
-        # Fully connected layers.
-        x = self.dense(x)
-        x = self.probability(x)
+            # Flatten & fully connected layers
+            x = self.flatten(x)
+            x = self.dense(x)
+
+            return x
+
+        # Sister networks.
+        first = encoder(inputs[0])
+        second = encoder(inputs[1])
+
+        # L1 distance.
+        distance = self.l1((first, second))
+
+        # Prediction.
+        x = self.prediction(x)
 
         return x
 
@@ -111,4 +133,10 @@ class SiameseNetwork(keras.Model):
 
 if __name__ == '__main__':
     net = SiameseNetwork(num_classes=1)
+    x = np.array([])
+
+    net.compile(optimizer=keras.optimizers.Adam(lr=1e-3),
+                loss=keras.losses.binary_crossentropy,
+                metrics=[keras.metrics.binary_accuracy])
+
     print(net)
