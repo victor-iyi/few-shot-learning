@@ -79,7 +79,7 @@ class SiameseNetwork(keras.Model):
     def __repr__(self):
         return f'models.SiameseNetwork(num_classes={self.num_classes})'
 
-    def call(self, inputs, **kwargs):
+    def call(self, inputs: tuple, **kwargs):
         """Calls the model on new inputs.
 
         In this case `call` just reapplies all ops in the graph to the new inputs
@@ -97,31 +97,39 @@ class SiameseNetwork(keras.Model):
             a list of tensors if there are more than one outputs.
         """
 
-        def encoder(x):
-            # Input layer.
-            x = self.input_layer(inputs)
-
-            # Convolutional blocks.
-            x = self.pool1(self.conv1(x))
-            x = self.pool2(self.conv2(x))
-            x = self.pool3(self.conv3(x))
-            x = self.pool4(self.conv4(x))
-
-            # Flatten & fully connected layers
-            x = self.flatten(x)
-            x = self.dense(x)
-
-            return x
-
         # Sister networks.
-        first = encoder(inputs[0])
-        second = encoder(inputs[1])
+        first = self.__encoder(inputs[0])
+        second = self.__encoder(inputs[1])
 
         # L1 distance.
         distance = self.l1((first, second))
 
         # Prediction.
         x = self.prediction(x)
+
+        return x
+
+    def __encoder(self, x):
+        """Compute forward pass. Encoder part of the network.
+
+        Args:
+            x (tf.Tensor): Individual input to the SiameseNetwork.
+
+        Returns:
+            tf.Tensor: Encoded output.
+        """
+        # Input layer.
+        x = self.input_layer(x)
+
+        # Convolutional blocks.
+        x = self.pool1(self.conv1(x))
+        x = self.pool2(self.conv2(x))
+        x = self.pool3(self.conv3(x))
+        x = self.pool4(self.conv4(x))
+
+        # Flatten & fully connected layers
+        x = self.flatten(x)
+        x = self.dense(x)
 
         return x
 
