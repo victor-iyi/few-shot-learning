@@ -111,7 +111,7 @@ class SiameseNetwork(keras.Model):
         return distance, pred
 
     @staticmethod
-    def triplet_loss(y_pred, y_true, alpha=0.2):
+    def triplet_loss(y_true, y_pred, alpha=0.2):
         """Triplet Loss function to compare pairs of
 
         Args:
@@ -130,7 +130,7 @@ class SiameseNetwork(keras.Model):
         return tf.reduce_sum(loss, axis=1, name="Triplet_Loss")
 
     @staticmethod
-    def constractive_loss(y_pred, y_true, alpha=0.2):
+    def constractive_loss(y_true, y_pred, alpha=0.2):
         """Constractive loss function.
 
         Args:
@@ -194,5 +194,4 @@ if __name__ == '__main__':
     net = SiameseNetwork(num_classes=1)
 
     net.compile(optimizer=keras.optimizers.Adam(lr=1e-3),
-                loss=net.triplet_loss,
-                metrics=[keras.metrics.binary_accuracy])
+                loss=SiameseNetwork.triplet_loss)

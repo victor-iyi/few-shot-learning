@@ -297,6 +297,35 @@ class Data(object):
 
         return image
 
+    @staticmethod
+    def get_images(directory: str):
+        pass
+
+
+class Dataset(object):
+    class Mode:
+        TRAIN = "TRAIN"
+        TEST = "TEST"
+        VAL = "VALIDATE"
+
+    def __init__(self, data_dir, mode=DATASET.Mode.TRAIN, **kwargs):
+        self.data_dir = data_dir
+
+    def __getitem__(self, idx):
+        pass
+
+    def __len__(self):
+        pass
+
+    def __repr__(self):
+        return 'Dataset()'
+
+    def __str__(self):
+        return self.__repr__()
+
+    def next_batch(self, batch_size=128):
+        pass
+
 
 if __name__ == '__main__':
     # Extracting files.
