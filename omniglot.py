@@ -326,7 +326,7 @@ class Dataset(object):
         else:
             raise FileNotFoundError(f'{path} was not found.')
 
-    def __getitem__(self, idx):
+    def __getitem__(self, idx: int):
         pass
 
     def __len__(self):
@@ -338,8 +338,21 @@ class Dataset(object):
     def __str__(self):
         return self.__repr__()
 
-    def load(self):
-        pass
+    def load(self, path: str, n: int=0):
+        X, y, categories = [], [], {}
+
+        # Load every directory for later isolation.
+        alphabet_paths = self.__listdir(path)
+
+        for alphabet_path in alphabet_paths:
+            # Get all letters of an alphabet.
+            letter_paths = self.__listdir(alphabet_path)
+
+            alphabet = os.path.basename(alphabet_path)
+            categories[alphabet] = (n, None)
+
+            for letter_path in letter_paths:
+                pass
 
     def next_batch(self, batch_size=128):
         pass
@@ -379,6 +392,17 @@ class Dataset(object):
         # Display & return extracted directory.
         print(f'Sucessfully extracted to {extracted_dir}')
         return extracted_dir
+
+    @staticmethod
+    def __listdir(root, tolist=False):
+        if tolist:
+            # List comprehension.
+            return [os.path.join(root, f) for f in os.listdir(root)
+                    if f[0] is not '.']
+
+        # Generator expression.
+        return (os.path.join(root, f) for f in os.listdir(root)
+                if f[0] is not '.')
 
 
 if __name__ == '__main__':
