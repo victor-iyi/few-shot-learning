@@ -18,6 +18,7 @@
      Copyright (c) 2018. Victor I. Afolabi. All rights reserved.
 """
 import os
+import pickle
 import zipfile
 import tarfile
 
@@ -88,8 +89,7 @@ class Visualize(object):
                           for f in os.listdir(train_dir) if f[0] is not '.'])
 
         assert len(train) == len(test) == n_examples, \
-            '{}, {} and {} are not equal'.format(
-                len(train), len(test), n_examples)
+            f'{len(train)}, {len(test)} and {len(n_examples)} are not equal'
 
         # Class labels.
         with open(label_path, mode='r') as f:
@@ -217,30 +217,32 @@ class Data(object):
     def extract(path: str):
         # Ensure the file exists.
         if not os.path.isfile(path):
-            raise FileNotFoundError('Could not find {}'.format(path))
+            raise FileNotFoundError(f'Could not find {path}')
 
         # Create extract directory if it doesn't exist.
         if not os.path.isdir(data_dir):
             os.makedirs(data_dir)
 
         if zipfile.is_zipfile(path):
+            print(f"Extracing {path}...")
             # Extract zipped file.
             with zipfile.ZipFile(path, mode="r") as z:
                 z.extractall(data_dir)
         elif path.endswith((".tar.gz", ".tgz")):
+            print(f"Extracting {path}...")
             # Unpack tarball.
             with tarfile.open(path, mode="r:gz") as t:
                 t.extractall(data_dir)
         else:
             # Unrecognized compressed file.
-            raise Exception('{} must a zipped or tarball file'.format(path))
+            raise Exception(f'{path} must a zipped or tarball file')
 
         # Retrive extracted directory.
         extracted_dir = os.path.basename(path).split('.')[0]
         extracted_dir = os.path.join(data_dir, extracted_dir)
 
         # Display & return extracted directory.
-        print('Sucessfully extracted to {}'.format(extracted_dir))
+        print(f'Sucessfully extracted to {extracted_dir}')
         return extracted_dir
 
     @staticmethod
@@ -284,9 +286,9 @@ class Data(object):
         except ImportError:
             raise ImportError('Please make sure you have Pillow installed.')
         except FileNotFoundError:
-            raise FileNotFoundError('{} was not found!'.format(path))
+            raise FileNotFoundError(f'{path} was not found!')
         except Exception as e:
-            raise Exception('ERROR: {}'.format(e))
+            raise Exception(f'ERROR: {path}')
 
         # Convert Pillow object to NumPy array.
         image = np.array(image, dtype=dtype)
@@ -304,12 +306,25 @@ class Data(object):
 
 class Dataset(object):
     class Mode:
+        """Dataset.Mode - Dataset pre-processing mode."""
         TRAIN = "TRAIN"
         TEST = "TEST"
         VAL = "VALIDATE"
 
-    def __init__(self, data_dir, mode=DATASET.Mode.TRAIN, **kwargs):
-        self.data_dir = data_dir
+    def __init__(self, path: str=None, mode=DATASET.Mode.TRAIN, **kwargs):
+        # Use argument or `omniglot.data_dir`.
+        path = path or data_dir
+
+        if os.path.isdir(path):
+            # Pre-process directory into pickle.
+            pass
+        elif path.endswith((".zip", ".gz", ".tar.gz")):
+            self.data_dir = Dataset.extract(path)
+            # Pre-process directory to be pickled.
+        elif path.endswith((".pkl", ".pickle")):
+            pass
+        else:
+            raise FileNotFoundError(f'{path} was not found.')
 
     def __getitem__(self, idx):
         pass
@@ -323,8 +338,47 @@ class Dataset(object):
     def __str__(self):
         return self.__repr__()
 
+    def load(self):
+        pass
+
     def next_batch(self, batch_size=128):
         pass
+
+    @classmethod
+    def from_pickle(cls, path: str):
+        pass
+
+    @staticmethod
+    def extract(path: str, extract_dir=data_dir):
+        # Ensure the file exists.
+        if not os.path.isfile(path):
+            raise FileNotFoundError(f'Could not find {path}')
+
+        # Create extract directory if it doesn't exist.
+        if not os.path.isdir(data_dir):
+            os.makedirs(data_dir)
+
+        if zipfile.is_zipfile(path):
+            print(f'Extracing {path}...')
+            # Extract zipped file.
+            with zipfile.ZipFile(path, mode="r") as z:
+                z.extractall(data_dir)
+        elif path.endswith((".tar.gz", ".tgz")):
+            print(f'Extracing {path}...')
+            # Unpack tarball.
+            with tarfile.open(path, mode="r:gz") as t:
+                t.extractall(data_dir)
+        else:
+            # Unrecognized compressed file.
+            raise ValueError(f'{path} must a zipped or tarball file')
+
+        # Retrive extracted directory.
+        extracted_dir = os.path.basename(path).split('.')[0]
+        extracted_dir = os.path.join(data_dir, extracted_dir)
+
+        # Display & return extracted directory.
+        print(f'Sucessfully extracted to {extracted_dir}')
+        return extracted_dir
 
 
 if __name__ == '__main__':

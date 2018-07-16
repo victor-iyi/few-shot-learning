@@ -124,7 +124,7 @@ class SiameseNetwork(keras.Model):
         """
 
         # Triplet loss for a single image.
-        loss = np.max(y_ture - y_pred + alpha, 0)
+        loss = tf.maximum(y_ture - y_pred + alpha, 0)
 
         # Sum over all images.
         return tf.reduce_sum(loss, axis=1, name="Triplet_Loss")
