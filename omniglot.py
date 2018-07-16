@@ -213,6 +213,21 @@ class Visualize(object):
 
 class Data(object):
 
+    class Mode:
+        """Data.Mode - Dataset pre-processing mode."""
+        TRAIN = "TRAIN"
+        TEST = "TEST"
+        VAL = "VALIDATE"
+
+    def __init__(self, **kwargs):
+        pass
+
+    def __repr__(self):
+        return 'omniglot.Data()'
+
+    def __str__(self):
+        return self.__repr__()
+
     @staticmethod
     def extract(path: str):
         # Ensure the file exists.
@@ -300,24 +315,46 @@ class Data(object):
         return image
 
     @staticmethod
-    def get_images(directory: str):
-        pass
+    def get_images(directory: str=None, paths: str=None,
+                   dtype: np.dtype=np.float32):
+        if directory is not None:
+            images = [Data.load_image(p) for p in Data._listdir(directory)]
+        elif paths is not None:
+            images = [Data.load_image(p) for p in paths]
+        else:
+            raise ValueError('Either `directory` or `paths` must be provided!')
+
+        images = np.array(images, dtype=dype)
+        return images
+
+    @staticmethod
+    def _listdir(root, tolist=False):
+        if tolist:
+            # List comprehension.
+            return [os.path.join(root, f) for f in os.listdir(root)
+                    if f[0] is not '.']
+
+        # Generator expression.
+        return (os.path.join(root, f) for f in os.listdir(root)
+                if f[0] is not '.')
+
+    @staticmethod
+    def _filter_files(files: iter):
+        ignored_list = ['', '.DS_Store']
+        return filter(lambda x: x not in ignored_list, files)
 
 
-class Dataset(object):
-    class Mode:
-        """Dataset.Mode - Dataset pre-processing mode."""
-        TRAIN = "TRAIN"
-        TEST = "TEST"
-        VAL = "VALIDATE"
+class Dataset(Data):
 
-    def __init__(self, path: str=None, mode=DATASET.Mode.TRAIN, **kwargs):
+    def __init__(self, path: str=None, mode=None, **kwargs):
         # Use argument or `omniglot.data_dir`.
         path = path or data_dir
+        mode = mode or Dataset.Mode.TRAIN
 
         if os.path.isdir(path):
             # Pre-process directory into pickle.
-            pass
+            self.data_dir = data_dir
+            self.load(self.data_dir)
         elif path.endswith((".zip", ".gz", ".tar.gz")):
             self.data_dir = Dataset.extract(path)
             # Pre-process directory to be pickled.
@@ -335,24 +372,26 @@ class Dataset(object):
     def __repr__(self):
         return 'Dataset()'
 
-    def __str__(self):
-        return self.__repr__()
-
-    def load(self, path: str, n: int=0):
+    def load(self, path: str, n: int=0, dtype: np.dtype=np.float32):
         X, y, categories = [], [], {}
 
+        for i, (root, _, files) in enumerate(os.walk(path)):
+            files = self._filter_files(files)
+            img_paths = [os.path.join(root, f) for f in files]
+            categories[0] = self.get_images(img_paths)
+
         # Load every directory for later isolation.
-        alphabet_paths = self.__listdir(path)
+        # alphabet_paths = self.__listdir(path)
 
-        for alphabet_path in alphabet_paths:
-            # Get all letters of an alphabet.
-            letter_paths = self.__listdir(alphabet_path)
+        # for alphabet_path in alphabet_paths:
+        #     # Get all letters of an alphabet.
+        #     letter_paths = self.__listdir(alphabet_path)
 
-            alphabet = os.path.basename(alphabet_path)
-            categories[alphabet] = (n, None)
+        #     alphabet = os.path.basename(alphabet_path)
+        #     categories[alphabet] = (n, None)
 
-            for letter_path in letter_paths:
-                pass
+        #     for letter_path in letter_paths:
+        #         images = self.get_images(letter_path)
 
     def next_batch(self, batch_size=128):
         pass
@@ -393,23 +432,14 @@ class Dataset(object):
         print(f'Sucessfully extracted to {extracted_dir}')
         return extracted_dir
 
-    @staticmethod
-    def __listdir(root, tolist=False):
-        if tolist:
-            # List comprehension.
-            return [os.path.join(root, f) for f in os.listdir(root)
-                    if f[0] is not '.']
-
-        # Generator expression.
-        return (os.path.join(root, f) for f in os.listdir(root)
-                if f[0] is not '.')
-
 
 if __name__ == '__main__':
+    data = Dataset()
+    # data.load()
     # Extracting files.
-    data_path = os.path.join(compressed_dir, 'all_runs.tar.gz')
-    data_path = Data.extract(data_path)
-    Visualize.runs(data_path + '/run01', index=3)
+    # data_path = os.path.join(compressed_dir, 'all_runs.tar.gz')
+    # data_path = Data.extract(data_path)
+    # Visualize.runs(data_path + '/run01', index=3)
 
     # data_path = 'datasets/extracted/images_background/Armenian'
     # Visualize.symbols(data_path)
