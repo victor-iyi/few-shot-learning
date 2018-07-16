@@ -130,6 +130,24 @@ class SiameseNetwork(keras.Model):
         return tf.reduce_sum(loss, axis=1, name="Triplet_Loss")
 
     @staticmethod
+    def constractive_loss(y_pred, y_true, alpha=0.2):
+        """Constractive loss function.
+
+        Args:
+            y_pred (tf.Tensor): Predicted distance between two inputs.
+            y_true (tf.Tensor): Ground truth or label.
+            alpha (float, optional): Defaults to 0.2. Slight margin
+                added to prediction to avoid 0-learning.
+
+        Returns:
+            tf.Tensor: Constractive loss function.
+        """
+
+        loss = (1 - y_true) * tf.pow(y_pred, 2) + tf.max(alpha - y_pred, 0)
+
+        return tf.reduce_mean(loss, name="Constractive_Loss")
+
+    @staticmethod
     def dist_func(x):
         """Difference function. Compute difference between 2 images.
 
