@@ -24,6 +24,7 @@ import numpy as np
 
 
 class SiameseNetwork(keras.Model):
+    """Siamese Neural network for few shot learning."""
 
     def __init__(self, num_classes: int=1, **kwargs):
         super(SiameseNetwork, self).__init__(name='SiameseNetwork')
@@ -70,11 +71,11 @@ class SiameseNetwork(keras.Model):
                                         activation=keras.activations.sigmoid)
 
         # 6th - L1 layer -distance layer.
-        self.l1 = keras.layers.Lambda(lambda x: tf.abs(x[0] - x[1]))
+        self.distance = keras.layers.Lambda(self.dist_func)
 
         # Output layer (4096x1)
         self.prediction = keras.layers.Dense(units=self.num_classes,
-                                             activation=keras.activations.sigmoid)
+                                             activation=keras.activations.softmax)
 
     def __repr__(self):
         return f'models.SiameseNetwork(num_classes={self.num_classes})'
@@ -105,9 +106,41 @@ class SiameseNetwork(keras.Model):
         distance = self.l1((first, second))
 
         # Prediction.
-        x = self.prediction(x)
+        pred = self.prediction(distance)
 
-        return x
+        return distance, pred
+
+    @staticmethod
+    def triplet_loss(y_pred, y_true, alpha=0.2):
+        """Triplet Loss function to compare pairs of
+
+        Args:
+            y_pred (tf.Tensor): Encoding of anchor & positive example.
+            y_true (tf.Tensor): Encoding of anchor & negative example.
+            alpha (float, optional): Defaults to 0.2. Margin added to f(A, P).
+
+        Returns:
+            tf.Tensor: Triplet loss.
+        """
+
+        # Triplet loss for a single image.
+        loss = np.max(y_ture - y_pred + alpha, 0)
+
+        # Sum over all images.
+        return tf.reduce_sum(loss, axis=1, name="Triplet_Loss")
+
+    @staticmethod
+    def dist_func(x):
+        """Difference function. Compute difference between 2 images.
+
+        Args:
+            x (tf.Tensor): Signifying two inputs.
+
+        Returns:
+            tf.Tensor: Absolute squared difference between two inputs.
+        """
+
+        return tf.abs(tf.squared_difference(x[0], x[1]))
 
     def __encoder(self, x):
         """Compute forward pass. Encoder part of the network.
@@ -127,7 +160,7 @@ class SiameseNetwork(keras.Model):
         x = self.pool3(self.conv3(x))
         x = self.pool4(self.conv4(x))
 
-        # Flatten & fully connected layers
+        # Flatten & fully connected layers.
         x = self.flatten(x)
         x = self.dense(x)
 
@@ -143,7 +176,5 @@ if __name__ == '__main__':
     net = SiameseNetwork(num_classes=1)
 
     net.compile(optimizer=keras.optimizers.Adam(lr=1e-3),
-                loss=keras.losses.binary_crossentropy,
+                loss=net.triplet_loss,
                 metrics=[keras.metrics.binary_accuracy])
-
-    print(net)
