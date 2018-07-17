@@ -28,9 +28,11 @@ import matplotlib.gridspec as gridspec
 
 from PIL import Image
 
-
-# Data directory.
+# Base data & save directory.
 base_dir = 'datasets/'
+save_dir = 'saved/'
+
+# Data sub directories.
 data_dir = os.path.join(base_dir, 'extracted')
 compressed_dir = os.path.join(base_dir, 'compressed')
 
@@ -324,7 +326,7 @@ class Data(object):
         else:
             raise ValueError('Either `directory` or `paths` must be provided!')
 
-        images = np.array(images, dtype=dype)
+        images = np.array(images, dtype=dtype)
         return images
 
     @staticmethod
@@ -340,8 +342,12 @@ class Data(object):
 
     @staticmethod
     def _filter_files(files: iter):
-        ignored_list = ['', '.DS_Store']
-        return filter(lambda x: x not in ignored_list, files)
+        ignored_list = ('', '.DS_Store')
+
+        def ignore(x: str):
+            return x not in ignored_list or not x.endswith(('.jpg', '.png'))
+
+        return list(filter(ignore, files))
 
 
 class Dataset(Data):
@@ -351,13 +357,19 @@ class Dataset(Data):
         path = path or data_dir
         mode = mode or Dataset.Mode.TRAIN
 
+        # Extract keyword arguments.
+        self.cache = kwargs.get('cache', True)
+        self.cache_dir = kwargs.get('cache_dir',
+                                    os.path.join(save_dir, mode.lower()))
+
         if os.path.isdir(path):
             # Pre-process directory into pickle.
             self.data_dir = data_dir
-            self.load(self.data_dir)
+            self.X, self.y = self.load(self.data_dir)
         elif path.endswith((".zip", ".gz", ".tar.gz")):
             self.data_dir = Dataset.extract(path)
             # Pre-process directory to be pickled.
+            self.X, self.y = self.load(self.data_dir)
         elif path.endswith((".pkl", ".pickle")):
             pass
         else:
@@ -373,25 +385,39 @@ class Dataset(Data):
         return 'Dataset()'
 
     def load(self, path: str, n: int=0, dtype: np.dtype=np.float32):
-        X, y, categories = [], [], {}
-
-        for i, (root, _, files) in enumerate(os.walk(path)):
+        X, y, class_idx = [], [], 0
+        print(f'ID  Alphabet {"Status":>42}')
+        status = True
+        for i, (root, folder, files) in enumerate(os.walk(path)):
+            # Filter files that aren't images.
             files = self._filter_files(files)
-            img_paths = [os.path.join(root, f) for f in files]
-            categories[0] = self.get_images(img_paths)
 
-        # Load every directory for later isolation.
-        # alphabet_paths = self.__listdir(path)
+            if len(files) > 1:
+                try:
+                    img_paths = [os.path.join(root, f) for f in files]
+                    # Categories.
+                    X.append(self.get_images(paths=img_paths))
+                    y.append(class_idx)
+                    status = True
+                except Exception as e:
+                    print(f'ERROR: {e}')
+                    status = False
+            else:
 
-        # for alphabet_path in alphabet_paths:
-        #     # Get all letters of an alphabet.
-        #     letter_paths = self.__listdir(alphabet_path)
+                if not folder[0].startswith("character"):
+                    continue
 
-        #     alphabet = os.path.basename(alphabet_path)
-        #     categories[alphabet] = (n, None)
+                name = os.path.basename(root).replace('_', ' ')
+                print(f'{class_idx:02d}. {name:<45} {"Good" if status else "ERROR"}')
 
-        #     for letter_path in letter_paths:
-        #         images = self.get_images(letter_path)
+                # Increment class index.
+                class_idx += 1
+
+        # Images & targets.
+        X, y = np.stack(X), np.vstack(y)
+
+        print(f'\nImages = {X.shape}\tTargets = {y.shape}\tIDX = {class_idx}')
+        return X, y
 
     def next_batch(self, batch_size=128):
         pass
@@ -399,6 +425,27 @@ class Dataset(Data):
     @classmethod
     def from_pickle(cls, path: str):
         pass
+
+    @classmethod
+    def from_xy(cls, X, y):
+        pass
+
+    def save(self, obj: any, name: str):
+        # Warn user about caching when cache is set ot False.
+        if not self.cache:
+            raise UserWarning("Dataset.cache is set to False.")
+
+        path = os.path.join(self.cache_dir, name)
+
+        if isinstance(obj, np.ndarray):
+            path = f'{path}.npy'
+            np.save(path, obj)
+        else:
+            path = f'{path}.pkl'
+            with open(path, mode="wb") as f:
+                pickle.dump(obj, file)
+
+        print(f'Cached "{name}" to "{path}"')
 
     @staticmethod
     def extract(path: str, extract_dir=data_dir):
@@ -435,20 +482,3 @@ class Dataset(Data):
 
 if __name__ == '__main__':
     data = Dataset()
-    # data.load()
-    # Extracting files.
-    # data_path = os.path.join(compressed_dir, 'all_runs.tar.gz')
-    # data_path = Data.extract(data_path)
-    # Visualize.runs(data_path + '/run01', index=3)
-
-    # data_path = 'datasets/extracted/images_background/Armenian'
-    # Visualize.symbols(data_path)
-
-    # Visualize single image.
-    # image = Data.load_image(os.path.join(data_dir,
-    #                                      'all_runs/run01/test/item01.png'))
-    # Visualize.image(image, title='Single Handwriting')
-
-    # Visualize single run.
-    # run_dir = os.path.join(data_dir, 'all_runs/run01')
-    # Visualize.runs(run_dir, index=3)
