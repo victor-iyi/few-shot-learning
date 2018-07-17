@@ -398,12 +398,14 @@ class Dataset(Data):
                     # Categories.
                     X.append(self.get_images(paths=img_paths))
                     y.append(class_idx)
+
+                    # Everything went okay.
                     status = True
                 except Exception as e:
+                    # Something went wrong!
                     print(f'ERROR: {e}')
                     status = False
             else:
-
                 if not folder[0].startswith("character"):
                     continue
 
