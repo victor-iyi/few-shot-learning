@@ -365,15 +365,18 @@ class Dataset(Data):
         if os.path.isdir(path):
             # Pre-process directory into pickle.
             self.data_dir = data_dir
-            self.X, self.y = self.load(self.data_dir)
+            self._X, self._y = self.load(self.data_dir)
         elif path.endswith((".zip", ".gz", ".tar.gz")):
             self.data_dir = Dataset.extract(path)
             # Pre-process directory to be pickled.
-            self.X, self.y = self.load(self.data_dir)
+            self._X, self._y = self.load(self.data_dir)
         elif path.endswith((".pkl", ".pickle")):
             pass
         else:
             raise FileNotFoundError(f'{path} was not found.')
+
+        self.n_classes, self.n_examples, self._width, self._height = self._X.shape
+        self._channel = 1
 
     def __getitem__(self, idx: int):
         pass
@@ -431,7 +434,14 @@ class Dataset(Data):
         return X, y
 
     def next_batch(self, batch_size: int=128):
-        pass
+        categories = np.random.choice(self.n_classes, size=(batch_size,),
+                                      replace=False)
+
+        pairs = [np.zeros(shape=(batch_size, self._height, self._width, self._channel))
+                 for i in range(2)]
+
+        targets = np.zeros(shape=(batch_size,))
+        targets[batch_size // 2:] = 1
 
     def save(self, obj: any, name: str):
         """Save object for easy retrival.
@@ -514,6 +524,11 @@ class Dataset(Data):
         # Display & return extracted directory.
         print(f'Sucessfully extracted to {extracted_dir}')
         return extracted_dir
+
+    @property
+    def shape(self):
+        _shape = (self.n_examples, self._width, self._height, self._channel)
+        return _shape
 
 
 if __name__ == '__main__':
