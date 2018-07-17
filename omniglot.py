@@ -385,8 +385,13 @@ class Dataset(Data):
         return 'Dataset()'
 
     def load(self, path: str, n: int=0, dtype: np.dtype=np.float32):
+        # Images, labels & class indices.
         X, y, class_idx = [], [], 0
+
+        # Table header.
         print(f'ID  Alphabet {"Status":>42}')
+
+        # Keep track of anything Exception.
         status = True
         for i, (root, folder, files) in enumerate(os.walk(path)):
             # Filter files that aren't images.
@@ -394,8 +399,10 @@ class Dataset(Data):
 
             if len(files) > 1:
                 try:
+                    # Get ||image file names||.
                     img_paths = [os.path.join(root, f) for f in files]
-                    # Categories.
+
+                    # Images & class index.
                     X.append(self.get_images(paths=img_paths))
                     y.append(class_idx)
 
@@ -406,9 +413,11 @@ class Dataset(Data):
                     print(f'ERROR: {e}')
                     status = False
             else:
+                # Continue if this is not an Alphabet folder.
                 if not folder[0].startswith("character"):
                     continue
 
+                # Get Alphabet's name.
                 name = os.path.basename(root).replace('_', ' ')
                 print(f'{class_idx:02d}. {name:<45} {"Good" if status else "ERROR"}')
 
@@ -421,21 +430,23 @@ class Dataset(Data):
         print(f'\nImages = {X.shape}\tTargets = {y.shape}\tIDX = {class_idx}')
         return X, y
 
-    def next_batch(self, batch_size=128):
-        pass
-
-    @classmethod
-    def from_pickle(cls, path: str):
-        pass
-
-    @classmethod
-    def from_xy(cls, X, y):
+    def next_batch(self, batch_size: int=128):
         pass
 
     def save(self, obj: any, name: str):
+        """Save object for easy retrival.
+
+        Args:
+            obj (any): Object to be cached.
+            name (str): base name of object.
+
+        Raises:
+            UserWarning: `Dataset.cache` is set to False.
+        """
+
         # Warn user about caching when cache is set ot False.
         if not self.cache:
-            raise UserWarning("Dataset.cache is set to False.")
+            raise UserWarning("`Dataset.cache` is set to False.")
 
         path = os.path.join(self.cache_dir, name)
 
@@ -448,6 +459,20 @@ class Dataset(Data):
                 pickle.dump(obj, file)
 
         print(f'Cached "{name}" to "{path}"')
+
+    @classmethod
+    def from_pickle(cls, path: str):
+        pass
+
+    @classmethod
+    def from_xy(cls, X: np.ndarray, y: np.ndarray):
+        # Create an instance..
+        inst = cls()
+
+        # Set X & Y.
+        inst.X, inst.y = x, y
+
+        return inst
 
     @staticmethod
     def extract(path: str, extract_dir=data_dir):
