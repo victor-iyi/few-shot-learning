@@ -434,14 +434,41 @@ class Dataset(Data):
         return X, y
 
     def next_batch(self, batch_size: int=128):
+        # Randomly sample several classes (alphabet) to use in the batch.
         categories = np.random.choice(self.n_classes, size=(batch_size,),
                                       replace=False)
 
+        # Initialize 2 empty arrays for the input image batch.
         pairs = [np.zeros(shape=(batch_size, self._height, self._width, self._channel))
                  for i in range(2)]
 
+        # Initialize vector for the targets, and make one half
+        # of it '1's, so 2nd half of batch has same class.
         targets = np.zeros(shape=(batch_size,))
         targets[batch_size // 2:] = 1
+
+        for i in range(batch_size):
+            # Pick the i'th random class (alphabet).
+            cat1 = categories[i]
+
+            # For 1st image pair:
+            # Sample a character ID from characters in this category.
+            idx1 = np.random.randint(low=0, high=self.n_examples)
+            pairs[0][i, :, :, :] = self._X[cat1, idx1]
+
+            # For 2nd image pair:
+            idx2 = np.random.randint(low=0, high=self.n_examples)
+
+            # Pick images of same class for 1st half, different for 2nd half.
+            if i >= batch_size // 2:
+                cat2 = cat1
+            else:
+                # Add a random number to the category modulo n classes to ensure
+                # 2nd image has different category.
+                cat2 = (cat1 + np.random.randint(1, self.n_classes)) % self.n_classes
+            pairs[1][i, :, :, :] = self._X[cat2, idx2].reshape(self._width, self._height, 1)
+
+        return pairs, targets
 
     def save(self, obj: any, name: str):
         """Save object for easy retrival.
