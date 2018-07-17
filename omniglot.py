@@ -461,8 +461,17 @@ class Dataset(Data):
         print(f'Cached "{name}" to "{path}"')
 
     @classmethod
-    def from_pickle(cls, path: str):
-        pass
+    def from_cache(cls, path: str):
+        if not os.path.isfile(path):
+            FileNotFoundError(f"{path} not found")
+
+        if not path.endswith(('.pkl', '.pickle')):
+            raise ValueError("{path} is not a pickle file")
+
+        with open(path, mode='rb') as f:
+            inst = pickle.load(f)
+
+        return inst
 
     @classmethod
     def from_xy(cls, X: np.ndarray, y: np.ndarray):
