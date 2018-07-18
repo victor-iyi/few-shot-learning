@@ -358,8 +358,8 @@ class Dataset(Data):
         path = path or data_dir
         mode = mode or Dataset.Mode.TRAIN
 
-        cache_dir = os.path.join(save_dir, mode.lower(),
-                                 os.path.basename(path))
+        cache_dir = os.path.join(save_dir, os.path.basename(path),
+                                 mode.lower())
 
         # Extract keyword arguments.
         self._cache = kwargs.get('cache', True)
@@ -368,7 +368,7 @@ class Dataset(Data):
 
         if self._cache:
             if not os.path.isdir(self._cache_dir):
-                self._log(f'Creating {self._cache_dir}...')
+                self._log(f'Creating {self._cache_dir}...\n')
                 os.makedirs(self._cache_dir)
 
         if os.path.isdir(path):
@@ -397,7 +397,19 @@ class Dataset(Data):
     def __repr__(self):
         return 'Dataset()'
 
-    def load(self, path: str, n: int=0, dtype: np.dtype=np.float32):
+    def load(self, path: str, dtype: np.dtype=np.float32):
+        X = self.read("images")
+        y = self.read("targets")
+
+        # Return cached images & labels.
+        if X is not False and y is not False:
+            self._log('Loading cached images & corresponding targest')
+
+            return X, y
+
+        # Process "images" & "targets".
+        self._log('Loading images & targets')
+
         # Images, labels & class indices.
         X, y, class_idx = [], [], 0
 
@@ -431,8 +443,10 @@ class Dataset(Data):
                     continue
 
                 # Get Alphabet's name.
-                name = os.path.basename(root).replace('_', ' ')
-                print(f'{class_idx:02d}. {name:<45} {"DONE" if status else "ERROR"}')
+                if self._verbose:
+                    name = os.path.basename(root).replace('_', ' ')
+                    print(
+                        f'{class_idx:02d}. {name:<45} {"DONE" if status else "ERROR"}')
 
                 # Increment class index.
                 class_idx += 1
@@ -441,7 +455,9 @@ class Dataset(Data):
         X, y = np.stack(X), np.vstack(y)
 
         if self._cache:
-            pass
+            # Save images & targets.
+            self.save(X, 'images')
+            self.save(y, 'targets')
 
         self._log(f'\nImages = {X.shape}\tTargets = {y.shape}\n')
 
@@ -561,7 +577,26 @@ class Dataset(Data):
             with open(path, mode="wb") as f:
                 pickle.dump(obj, file)
 
-        print(f'Cached "{name}" to "{path}"')
+        self._log(f'Cached "{name}" to "{path}"')
+
+    def read(self, name: str):
+        npy_path, pkl_path = f'{name}.npy', f'{name}.pkl'
+
+        npy_path = os.path.join(self._cache_dir, npy_path)
+        pkl_path = os.path.join(self._cache_dir, pkl_path)
+
+        if os.path.isfile(npy_path):
+            # Load numpy object.
+            obj = np.load(npy_path)
+        elif os.path.isfile(pkl_path):
+            # Load pickled.
+            with open(pkl_path, mode="rb") as f:
+                obj = pickle.load(f)
+        else:
+            # File not found.
+            obj = False
+
+        return obj
 
     @classmethod
     def from_cache(cls, path: str):
