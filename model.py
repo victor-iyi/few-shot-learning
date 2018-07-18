@@ -75,7 +75,7 @@ class SiameseNetwork(keras.Model):
 
         # Output layer (4096x1)
         self.prediction = keras.layers.Dense(units=self.num_classes,
-                                             activation=keras.activations.softmax)
+                                             activation=keras.activations.sigmoid)
 
     def __repr__(self):
         return f'models.SiameseNetwork(num_classes={self.num_classes})'
@@ -133,9 +133,17 @@ class SiameseNetwork(keras.Model):
     def constractive_loss(y_true, y_pred, alpha=0.2):
         """Constractive loss function.
 
+        Binary cross entropy between the predictions and targets.
+        There is also a L2 weight decay term in the loss to encourage
+        the network to learn smaller/less noisy weights and possibly
+        improve generalization:
+
+        L(x1, x2, t) = t⋅log(p(x1 ∘ x2)) + (1−t)⋅log(1 − p(x1 ∘ x2)) + λ⋅||w||2
+
         Args:
             y_pred (tf.Tensor): Predicted distance between two inputs.
-            y_true (tf.Tensor): Ground truth or label.
+            y_true (tf.Tensor): Ground truth or target, t (where, t = [1 or 0]).
+
             alpha (float, optional): Defaults to 0.2. Slight margin
                 added to prediction to avoid 0-learning.
 
@@ -143,7 +151,8 @@ class SiameseNetwork(keras.Model):
             tf.Tensor: Constractive loss function.
         """
 
-        loss = (1 - y_true) * tf.pow(y_pred, 2) + tf.max(alpha - y_pred, 0)
+        loss = y_true * tf.log(y_pred) + (1 - y_true) * \
+            tf.log(1 - y_pred) + alpha
 
         return tf.reduce_mean(loss, name="Constractive_Loss")
 

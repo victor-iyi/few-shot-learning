@@ -444,7 +444,7 @@ class Dataset(Data):
 
             Yields:
                 tuple (pairs, target) -- Image pairs & target (0 or 1)
-                    target=1 if paris are the same letter & 0 otherwise.
+                    target=1 if pairs are the same letter & 0 otherwise.
         """
 
         while True:
@@ -490,14 +490,40 @@ class Dataset(Data):
 
         return pairs, targets
 
-    def get_one_shot_task(self, N: int):
-        """Create pairs of images for testing N-way one-shot learning.
+    def one_shot_task(self, N: int, language: dict=None):
+        """Create image pair for N-way one shot learning task.
 
         Args:
             N (int): Number of pairs to generate.
         """
 
-        pass
+        indicies = np.random.randint(0, self.n_examples, size=(N,))
+
+        # Pick random letters.
+        categories = np.random.randint(range(self.n_classes), size=(N,))
+
+        true_cat = categories[0]
+        ex1, ex2 = np.random.choice(self.n_examples, size=(2,))
+
+        # 1st image in pair.
+        first = np.array([self._images[true_cat, ex1, :, :, ]] * N)
+        first = first.reshape(N, self._width, self._height, self._channel)
+
+        # 2nd image in pair (support set).
+        second = self._images[categories, indicies, :, :]
+        second[0, :, :] = self._images[true_cat, ex2]
+        second = second.reshape(N, self._width, self._height, self._channel)
+
+        # Target
+        targets = np.zeros(shape=(N,))
+        targets[0] = 1
+
+        # Shuffle data.
+        targets, first, second = np.random.shuffle((targets, first, second))
+
+        pairs = [first, second]
+
+        return paris, targets
 
     def save(self, obj: any, name: str):
         """Save object for easy retrival.
