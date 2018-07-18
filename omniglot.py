@@ -220,6 +220,7 @@ class Data(object):
         TRAIN = "TRAIN"
         TEST = "TEST"
         VAL = "VALIDATE"
+        VALIDATE = VAL
 
     def __init__(self, **kwargs):
         pass
@@ -231,7 +232,7 @@ class Data(object):
         return self.__repr__()
 
     @staticmethod
-    def extract(path: str):
+    def extract(path: str, extract_dir=data_dir):
         # Ensure the file exists.
         if not os.path.isfile(path):
             raise FileNotFoundError(f'Could not find {path}')
@@ -241,18 +242,18 @@ class Data(object):
             os.makedirs(data_dir)
 
         if zipfile.is_zipfile(path):
-            print(f"Extracing {path}...")
+            print(f'Extracing {path}...')
             # Extract zipped file.
             with zipfile.ZipFile(path, mode="r") as z:
                 z.extractall(data_dir)
         elif path.endswith((".tar.gz", ".tgz")):
-            print(f"Extracting {path}...")
+            print(f'Extracing {path}...')
             # Unpack tarball.
             with tarfile.open(path, mode="r:gz") as t:
                 t.extractall(data_dir)
         else:
             # Unrecognized compressed file.
-            raise Exception(f'{path} must a zipped or tarball file')
+            raise ValueError(f'{path} must a zipped or tarball file')
 
         # Retrive extracted directory.
         extracted_dir = os.path.basename(path).split('.')[0]
@@ -358,7 +359,7 @@ class Dataset(Data):
         path = path or data_dir
         self._mode = mode or Dataset.Mode.TRAIN
 
-        cache_dir = os.path.join(save_dir, os.path.basename(path),
+        cache_dir = os.path.join(save_dir, os.path.basename(path).split('.')[0],
                                  self._mode.lower())
 
         # Extract keyword arguments.
@@ -373,12 +374,12 @@ class Dataset(Data):
 
         if os.path.isdir(path):
             # Pre-process directory into pickle.
-            self.data_dir = data_dir
-            self._images, self._targets = self.load(self.data_dir)
+            self._data_dir = path
+            self._images, self._targets = self.load(self._data_dir)
         elif path.endswith((".zip", ".gz", ".tar.gz")):
-            self.data_dir = Dataset.extract(path)
+            self._data_dir = Dataset.extract(path)
             # Pre-process directory to be pickled.
-            self._images, self._targets = self.load(self.data_dir)
+            self._images, self._targets = self.load(self._data_dir)
         elif path.endswith((".pkl", ".pickle")):
             pass
         else:
@@ -390,13 +391,36 @@ class Dataset(Data):
 
     def __repr__(self):
         return (f"Dataset(mode='{self._mode}', cache={self._cache}, "
-                f"cache_dir={self._cache_dir})")
+                f"cache_dir='{self._cache_dir}')")
 
     def __getitem__(self, idx: int):
         pass
 
     def __len__(self):
         return self.len(self._images)
+
+    @classmethod
+    def from_cache(cls, path: str):
+        if not os.path.isfile(path):
+            FileNotFoundError(f"{path} not found")
+
+        if not path.endswith(('.pkl', '.pickle')):
+            raise ValueError("{path} is not a pickle file")
+
+        with open(path, mode='rb') as f:
+            inst = pickle.load(f)
+
+        return inst
+
+    @classmethod
+    def from_xy(cls, X: np.ndarray, y: np.ndarray):
+        # Create an instance..
+        inst = cls()
+
+        # Set X & Y.
+        inst._images, inst._images = x, y
+
+        return inst
 
     def load(self, path: str, dtype: np.dtype=np.float32):
         X = self.read("images")
@@ -599,61 +623,6 @@ class Dataset(Data):
             obj = False
 
         return obj
-
-    @classmethod
-    def from_cache(cls, path: str):
-        if not os.path.isfile(path):
-            FileNotFoundError(f"{path} not found")
-
-        if not path.endswith(('.pkl', '.pickle')):
-            raise ValueError("{path} is not a pickle file")
-
-        with open(path, mode='rb') as f:
-            inst = pickle.load(f)
-
-        return inst
-
-    @classmethod
-    def from_xy(cls, X: np.ndarray, y: np.ndarray):
-        # Create an instance..
-        inst = cls()
-
-        # Set X & Y.
-        inst._images, inst._images = x, y
-
-        return inst
-
-    @staticmethod
-    def extract(path: str, extract_dir=data_dir):
-        # Ensure the file exists.
-        if not os.path.isfile(path):
-            raise FileNotFoundError(f'Could not find {path}')
-
-        # Create extract directory if it doesn't exist.
-        if not os.path.isdir(data_dir):
-            os.makedirs(data_dir)
-
-        if zipfile.is_zipfile(path):
-            print(f'Extracing {path}...')
-            # Extract zipped file.
-            with zipfile.ZipFile(path, mode="r") as z:
-                z.extractall(data_dir)
-        elif path.endswith((".tar.gz", ".tgz")):
-            print(f'Extracing {path}...')
-            # Unpack tarball.
-            with tarfile.open(path, mode="r:gz") as t:
-                t.extractall(data_dir)
-        else:
-            # Unrecognized compressed file.
-            raise ValueError(f'{path} must a zipped or tarball file')
-
-        # Retrive extracted directory.
-        extracted_dir = os.path.basename(path).split('.')[0]
-        extracted_dir = os.path.join(data_dir, extracted_dir)
-
-        # Display & return extracted directory.
-        print(f'Sucessfully extracted to {extracted_dir}')
-        return extracted_dir
 
     def to_cache(self):
         pass
