@@ -353,6 +353,7 @@ class Data(object):
 class Dataset(Data):
 
     def __init__(self, path: str=None, mode=None, **kwargs):
+
         # Use argument or `omniglot.data_dir`.
         path = path or data_dir
         mode = mode or Dataset.Mode.TRAIN
@@ -361,21 +362,23 @@ class Dataset(Data):
         self.cache = kwargs.get('cache', True)
         self.cache_dir = kwargs.get('cache_dir',
                                     os.path.join(save_dir, mode.lower()))
+        self._verbose = kwargs.get('verbose', 1)
 
         if os.path.isdir(path):
             # Pre-process directory into pickle.
             self.data_dir = data_dir
-            self._X, self._y = self.load(self.data_dir)
+            self._images, self._targets = self.load(self.data_dir)
         elif path.endswith((".zip", ".gz", ".tar.gz")):
             self.data_dir = Dataset.extract(path)
             # Pre-process directory to be pickled.
-            self._X, self._y = self.load(self.data_dir)
+            self._images, self._targets = self.load(self.data_dir)
         elif path.endswith((".pkl", ".pickle")):
             pass
         else:
             raise FileNotFoundError(f'{path} was not found.')
 
-        self.n_classes, self.n_examples, self._width, self._height = self._X.shape
+        # self.n_examples, self.n_classes, self._width, self._height = self._images.shape
+        self.n_classes, self.n_examples, self._width, self._height = self._images.shape
         self._channel = 1
 
     def __getitem__(self, idx: int):
@@ -434,6 +437,21 @@ class Dataset(Data):
         return X, y
 
     def next_batch(self, batch_size: int=128):
+        """Batch generator. Gets the next image pairs and corresponding target.
+
+            Args:
+                batch_size (int, optional): Defaults to 128. Mini batch size.
+
+            Yields:
+                tuple (pairs, target) -- Image pairs & target (0 or 1)
+                    target=1 if paris are the same letter & 0 otherwise.
+        """
+
+        while True:
+            pairs, target = self.get_batch(batch_size=batch_size)
+            yield pairs, target
+
+    def get_batch(self, batch_size: int=128):
         # Randomly sample several classes (alphabet) to use in the batch.
         categories = np.random.choice(self.n_classes, size=(batch_size,),
                                       replace=False)
@@ -454,7 +472,7 @@ class Dataset(Data):
             # For 1st image pair:
             # Sample a character ID from characters in this category.
             idx1 = np.random.randint(low=0, high=self.n_examples)
-            pairs[0][i, :, :, :] = self._X[cat1, idx1]
+            pairs[0][i, :, :, :] = self._images[cat1, idx1]
 
             # For 2nd image pair:
             idx2 = np.random.randint(low=0, high=self.n_examples)
@@ -465,8 +483,10 @@ class Dataset(Data):
             else:
                 # Add a random number to the category modulo n classes to ensure
                 # 2nd image has different category.
-                cat2 = (cat1 + np.random.randint(1, self.n_classes)) % self.n_classes
-            pairs[1][i, :, :, :] = self._X[cat2, idx2].reshape(self._width, self._height, 1)
+                cat2 = (cat1 + np.random.randint(1, self.n_classes)
+                        ) % self.n_classes
+            pairs[1][i, :, :, :] = self._images[cat2, idx2].reshape(
+                self._width, self._height, 1)
 
         return pairs, targets
 
