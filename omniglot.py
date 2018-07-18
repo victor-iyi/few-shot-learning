@@ -358,11 +358,18 @@ class Dataset(Data):
         path = path or data_dir
         mode = mode or Dataset.Mode.TRAIN
 
+        cache_dir = os.path.join(save_dir, mode.lower(),
+                                 os.path.basename(path))
+
         # Extract keyword arguments.
-        self.cache = kwargs.get('cache', True)
-        self.cache_dir = kwargs.get('cache_dir',
-                                    os.path.join(save_dir, mode.lower()))
+        self._cache = kwargs.get('cache', True)
+        self._cache_dir = kwargs.get('cache_dir', cache_dir)
         self._verbose = kwargs.get('verbose', 1)
+
+        if self._cache:
+            if not os.path.isdir(self._cache_dir):
+                self._log(f'Creating {self._cache_dir}...')
+                os.makedirs(self._cache_dir)
 
         if os.path.isdir(path):
             # Pre-process directory into pickle.
@@ -433,7 +440,11 @@ class Dataset(Data):
         # Images & targets.
         X, y = np.stack(X), np.vstack(y)
 
-        print(f'\nImages = {X.shape}\tTargets = {y.shape}\tIDX = {class_idx}')
+        if self._cache:
+            pass
+
+        self._log(f'\nImages = {X.shape}\tTargets = {y.shape}\n')
+
         return X, y
 
     def next_batch(self, batch_size: int=128):
@@ -490,7 +501,7 @@ class Dataset(Data):
 
         return pairs, targets
 
-    def one_shot_task(self, N: int, language: dict=None):
+    def one_shot_task(self, N: int):
         """Create image pair for N-way one shot learning task.
 
         Args:
@@ -500,7 +511,7 @@ class Dataset(Data):
         indicies = np.random.randint(0, self.n_examples, size=(N,))
 
         # Pick random letters.
-        categories = np.random.randint(range(self.n_classes), size=(N,))
+        categories = np.random.randint(np.arange(self.n_classes), size=(N,))
 
         true_cat = categories[0]
         ex1, ex2 = np.random.choice(self.n_examples, size=(2,))
@@ -537,10 +548,10 @@ class Dataset(Data):
         """
 
         # Warn user about caching when cache is set ot False.
-        if not self.cache:
+        if not self._cache:
             raise UserWarning("`Dataset.cache` is set to False.")
 
-        path = os.path.join(self.cache_dir, name)
+        path = os.path.join(self._cache_dir, name)
 
         if isinstance(obj, np.ndarray):
             path = f'{path}.npy'
@@ -607,6 +618,12 @@ class Dataset(Data):
         print(f'Sucessfully extracted to {extracted_dir}')
         return extracted_dir
 
+    def _log(self, *args, **kwargs):
+        """Custom logger method for debug purposes."""
+
+        if self._verbose:
+            print(*args, **kwargs)
+
     @property
     def shape(self):
         _shape = (self.n_examples, self._width, self._height, self._channel)
@@ -614,4 +631,7 @@ class Dataset(Data):
 
 
 if __name__ == '__main__':
-    data = Dataset()
+    train = Dataset(path=os.path.join(data_dir, 'images_background'))
+    # test = Dataset(path=os.path.join(data_dir, 'images_evaluation'))
+
+    # pairs, target = train.one_shot_task(N=1)
