@@ -27,7 +27,7 @@ import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 
 from PIL import Image
-
+from sklearn.utils import shuffle
 # Base data & save directory.
 base_dir = 'datasets/'
 save_dir = 'saved/'
@@ -356,10 +356,10 @@ class Dataset(Data):
 
         # Use argument or `omniglot.data_dir`.
         path = path or data_dir
-        mode = mode or Dataset.Mode.TRAIN
+        self._mode = mode or Dataset.Mode.TRAIN
 
         cache_dir = os.path.join(save_dir, os.path.basename(path),
-                                 mode.lower())
+                                 self._mode.lower())
 
         # Extract keyword arguments.
         self._cache = kwargs.get('cache', True)
@@ -388,14 +388,15 @@ class Dataset(Data):
         self.n_classes, self.n_examples, self._width, self._height = self._images.shape
         self._channel = 1
 
+    def __repr__(self):
+        return (f"Dataset(mode='{self._mode}', cache={self._cache}, "
+                f"cache_dir={self._cache_dir})")
+
     def __getitem__(self, idx: int):
         pass
 
     def __len__(self):
-        pass
-
-    def __repr__(self):
-        return 'Dataset()'
+        return self.len(self._images)
 
     def load(self, path: str, dtype: np.dtype=np.float32):
         X = self.read("images")
@@ -403,7 +404,7 @@ class Dataset(Data):
 
         # Return cached images & labels.
         if X is not False and y is not False:
-            self._log('Loading cached images & corresponding targest')
+            self._log('Loading cached images & corresponding targets.')
 
             return X, y
 
@@ -499,7 +500,8 @@ class Dataset(Data):
             # For 1st image pair:
             # Sample a character ID from characters in this category.
             idx1 = np.random.randint(low=0, high=self.n_examples)
-            pairs[0][i, :, :, :] = self._images[cat1, idx1]
+            pairs[0][i, :, :, :] = self._images[cat1, idx1]\
+                .reshape(self._width, self._height, self._channel)
 
             # For 2nd image pair:
             idx2 = np.random.randint(low=0, high=self.n_examples)
@@ -512,8 +514,8 @@ class Dataset(Data):
                 # 2nd image has different category.
                 cat2 = (cat1 + np.random.randint(1, self.n_classes)
                         ) % self.n_classes
-            pairs[1][i, :, :, :] = self._images[cat2, idx2].reshape(
-                self._width, self._height, 1)
+            pairs[1][i, :, :, :] = self._images[cat2, idx2]\
+                .reshape(self._width, self._height, self._channel)
 
         return pairs, targets
 
@@ -527,7 +529,7 @@ class Dataset(Data):
         indicies = np.random.randint(0, self.n_examples, size=(N,))
 
         # Pick random letters.
-        categories = np.random.randint(np.arange(self.n_classes), size=(N,))
+        categories = np.random.randint(self.n_classes, size=(N,))
 
         true_cat = categories[0]
         ex1, ex2 = np.random.choice(self.n_examples, size=(2,))
@@ -546,11 +548,11 @@ class Dataset(Data):
         targets[0] = 1
 
         # Shuffle data.
-        targets, first, second = np.random.shuffle((targets, first, second))
+        targets, first, second = shuffle(targets, first, second)
 
         pairs = [first, second]
 
-        return paris, targets
+        return pairs, targets
 
     def save(self, obj: any, name: str):
         """Save object for easy retrival.
@@ -617,7 +619,7 @@ class Dataset(Data):
         inst = cls()
 
         # Set X & Y.
-        inst.X, inst.y = x, y
+        inst._images, inst._images = x, y
 
         return inst
 
@@ -653,6 +655,9 @@ class Dataset(Data):
         print(f'Sucessfully extracted to {extracted_dir}')
         return extracted_dir
 
+    def to_cache(self):
+        pass
+
     def _log(self, *args, **kwargs):
         """Custom logger method for debug purposes."""
 
@@ -661,12 +666,13 @@ class Dataset(Data):
 
     @property
     def shape(self):
-        _shape = (self.n_examples, self._width, self._height, self._channel)
+        _shape = (self.n_classes, self._width, self._height, self._channel)
         return _shape
 
 
 if __name__ == '__main__':
-    train = Dataset(path=os.path.join(data_dir, 'images_background'))
     # test = Dataset(path=os.path.join(data_dir, 'images_evaluation'))
 
-    # pairs, target = train.one_shot_task(N=1)
+    train = Dataset(path=os.path.join(data_dir, 'images_background'))
+    pairs, target = train.get_batch(batch_size=6)
+    print(pairs[0].shape, pairs[1].shape, target.shape)
