@@ -425,7 +425,7 @@ class Dataset(Data):
 
                 # Get Alphabet's name.
                 name = os.path.basename(root).replace('_', ' ')
-                print(f'{class_idx:02d}. {name:<45} {"Good" if status else "ERROR"}')
+                print(f'{class_idx:02d}. {name:<45} {"DONE" if status else "ERROR"}')
 
                 # Increment class index.
                 class_idx += 1
@@ -489,6 +489,15 @@ class Dataset(Data):
                 self._width, self._height, 1)
 
         return pairs, targets
+
+    def get_one_shot_task(self, N: int):
+        """Create pairs of images for testing N-way one-shot learning.
+
+        Args:
+            N (int): Number of pairs to generate.
+        """
+
+        pass
 
     def save(self, obj: any, name: str):
         """Save object for easy retrival.
