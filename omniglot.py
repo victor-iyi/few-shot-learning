@@ -28,6 +28,7 @@ import matplotlib.gridspec as gridspec
 
 from PIL import Image
 from sklearn.utils import shuffle
+
 # Base data & save directory.
 base_dir = 'datasets/'
 save_dir = 'saved/'

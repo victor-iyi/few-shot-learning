@@ -200,7 +200,8 @@ class SiameseNetwork(keras.Model):
 
 
 if __name__ == '__main__':
-    net = SiameseNetwork(num_classes=1)
+    # net = SiameseNetwork(num_classes=1)
+    model = SiameseNetwork(num_classes=1)
 
-    net.compile(optimizer=keras.optimizers.Adam(lr=1e-3),
-                loss=SiameseNetwork.triplet_loss)
+    # net.compile(optimizer=keras.optimizers.Adam(lr=1e-3),
+    #             loss=SiameseNetwork.triplet_loss)
