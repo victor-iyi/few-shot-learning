@@ -1,7 +1,7 @@
 """Omniglot dataset helper file.
 
-  @description
-    For visualizing, pre-processing and loading the Omniglot dataset.
+   @description
+     For visualizing, pre-processing and loading the Omniglot dataset.
 
    @author
      Victor I. Afolabi
