@@ -639,6 +639,14 @@ class Dataset(Data):
         _shape = (self.n_classes, self._width, self._height, self._channel)
         return _shape
 
+    @property
+    def images(self):
+        return self._images
+
+    @property
+    def targets(self):
+        return self._targets
+
 
 if __name__ == '__main__':
     # test = Dataset(path=os.path.join(data_dir, 'images_evaluation'))

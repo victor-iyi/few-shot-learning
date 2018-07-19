@@ -37,9 +37,9 @@ class SiameseNetwork(keras.Model):
         self.in_shape = kwargs.get('input_shape', (105, 105, 1))
 
         # Input layer.
-        self.input_layer = keras.layers.InputLayer(input_shape=self.in_shape,
-                                                   batch_size=self.batch_size,
-                                                   dtype=tf.float32, name='Images')
+        # self.input_layer = keras.layers.InputLayer(input_shape=self.in_shape,
+        #                                            batch_size=self.batch_size,
+        #                                            dtype=tf.float32, name='Images')
 
         # 1st layer (64@10x10)
         self.conv1 = keras.layers.Conv2D(filters=64, kernel_size=(10, 10),
@@ -79,6 +79,9 @@ class SiameseNetwork(keras.Model):
 
     def __repr__(self):
         return f'SiameseNetwork(num_classes={self.num_classes})'
+
+    def __str__(self):
+        return self.__repr__()
 
     def call(self, inputs, **kwargs):
         """Calls the model on new inputs.
@@ -130,8 +133,8 @@ class SiameseNetwork(keras.Model):
         return tf.reduce_sum(loss, axis=1, name="Triplet_Loss")
 
     @staticmethod
-    def constractive_loss(y_true, y_pred, alpha=0.2):
-        """Constractive loss function.
+    def contrastive_loss(y_true, y_pred, alpha=0.2):
+        """Contrastive loss function.
 
         Binary cross entropy between the predictions and targets.
         There is also a L2 weight decay term in the loss to encourage
@@ -154,7 +157,7 @@ class SiameseNetwork(keras.Model):
         loss = y_true * tf.log(y_pred) + (1 - y_true) * \
             tf.log(1 - y_pred) + alpha
 
-        return tf.reduce_mean(loss, name="Constractive_Loss")
+        return tf.reduce_mean(loss, name="contrastive_loss")
 
     @staticmethod
     def dist_func(x):
@@ -179,7 +182,7 @@ class SiameseNetwork(keras.Model):
             tf.Tensor: Encoded output.
         """
         # Input layer.
-        x = self.input_layer(x)
+        # x = self.input_layer(x)
 
         # Convolutional blocks.
         x = self.pool1(self.conv1(x))
@@ -214,4 +217,4 @@ if __name__ == '__main__':
     net = SiameseNetwork(num_classes=1)
 
     net.compile(optimizer=keras.optimizers.Adam(lr=1e-3),
-                loss=SiameseNetwork.constractive_loss)
+                loss=SiameseNetwork.contrastive_loss)
