@@ -214,4 +214,4 @@ if __name__ == '__main__':
     net = SiameseNetwork(num_classes=1)
 
     net.compile(optimizer=keras.optimizers.Adam(lr=1e-3),
-                loss=SiameseNetwork.triplet_loss)
+                loss=SiameseNetwork.constractive_loss)
