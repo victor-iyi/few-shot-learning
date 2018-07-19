@@ -33,13 +33,12 @@ class SiameseNetwork(keras.Model):
         self.num_classes = num_classes
 
         # Keyword Arguments.
-        self.batch_size = kwargs.get('batch_size', 16)
-        self.in_shape = kwargs.get('input_shape', (105, 105, 1))
+        # self.batch_size = kwargs.get('batch_size', 16)
+        self.in_shape = kwargs.get('input_shape', (2, 105, 105, 1))
 
         # Input layer.
-        # self.input_layer = keras.layers.InputLayer(input_shape=self.in_shape,
-        #                                            batch_size=self.batch_size,
-        #                                            dtype=tf.float32, name='Images')
+        self.input_layer = keras.layers.InputLayer(input_shape=self.in_shape,
+                                                   dtype=tf.float32, name='Images')
 
         # 1st layer (64@10x10)
         self.conv1 = keras.layers.Conv2D(filters=64, kernel_size=(10, 10),
@@ -113,6 +112,22 @@ class SiameseNetwork(keras.Model):
 
         return distance, pred
 
+    def compute_output_shape(self, input_shape):
+        """You need to override this function if you want to use the
+        subclassed model as part of the functional-style model.
+        Otherwise, this method is optional.
+
+        Args:
+            input_shape (tf.TensorShape): Input shape.
+
+        Returns:
+            tf.TensorShape: Output shape.
+        """
+
+        shape = tf.TensorShape(input_shape).as_list()
+        shape[-1] = self.num_classes
+        return tf.TensorShape(shape)
+
     @staticmethod
     def triplet_loss(y_true, y_pred, alpha=0.2):
         """Triplet Loss function to compare pairs of
@@ -182,7 +197,7 @@ class SiameseNetwork(keras.Model):
             tf.Tensor: Encoded output.
         """
         # Input layer.
-        # x = self.input_layer(x)
+        x = self.input_layer(x)
 
         # Convolutional blocks.
         x = self.pool1(self.conv1(x))
@@ -195,22 +210,6 @@ class SiameseNetwork(keras.Model):
         x = self.dense(x)
 
         return x
-
-    def compute_output_shape(self, input_shape):
-        """You need to override this function if you want to use the
-        subclassed model as part of the functional-style model.
-        Otherwise, this method is optional.
-
-        Args:
-            input_shape (tf.TensorShape): Input shape.
-
-        Returns:
-            tf.TensorShape: Output shape.
-        """
-
-        shape = tf.TensorShape(input_shape).as_list()
-        shape[-1] = self.num_classes
-        return tf.TensorShape(shape)
 
 
 if __name__ == '__main__':
