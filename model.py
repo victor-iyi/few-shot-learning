@@ -78,15 +78,15 @@ class SiameseNetwork(keras.Model):
                                              activation=keras.activations.sigmoid)
 
     def __repr__(self):
-        return f'models.SiameseNetwork(num_classes={self.num_classes})'
+        return f'SiameseNetwork(num_classes={self.num_classes})'
 
-    def call(self, inputs: tuple, **kwargs):
+    def call(self, inputs, **kwargs):
         """Calls the model on new inputs.
 
         In this case `call` just reapplies all ops in the graph to the new inputs
         (e.g. build a new computational graph from the provided inputs).
 
-        Arguments:
+        Args:
             inputs: A tensor or list of tensors.
             training: Boolean or boolean scalar tensor, indicating whether to run
             the `Network` in training mode or inference mode.
@@ -103,7 +103,7 @@ class SiameseNetwork(keras.Model):
         second = self.__encoder(inputs[1])
 
         # L1 distance.
-        distance = self.l1((first, second))
+        distance = self.distance((first, second))
 
         # Prediction.
         pred = self.prediction(distance)
@@ -194,14 +194,24 @@ class SiameseNetwork(keras.Model):
         return x
 
     def compute_output_shape(self, input_shape):
+        """You need to override this function if you want to use the
+        subclassed model as part of the functional-style model.
+        Otherwise, this method is optional.
+
+        Args:
+            input_shape (tf.TensorShape): Input shape.
+
+        Returns:
+            tf.TensorShape: Output shape.
+        """
+
         shape = tf.TensorShape(input_shape).as_list()
         shape[-1] = self.num_classes
         return tf.TensorShape(shape)
 
 
 if __name__ == '__main__':
-    # net = SiameseNetwork(num_classes=1)
-    model = SiameseNetwork(num_classes=1)
+    net = SiameseNetwork(num_classes=1)
 
-    # net.compile(optimizer=keras.optimizers.Adam(lr=1e-3),
-    #             loss=SiameseNetwork.triplet_loss)
+    net.compile(optimizer=keras.optimizers.Adam(lr=1e-3),
+                loss=SiameseNetwork.triplet_loss)
