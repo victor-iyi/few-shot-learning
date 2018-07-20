@@ -527,7 +527,9 @@ class Dataset(Data):
         categories = np.random.choice(self.n_classes, size=(batch_size,))
 
         # Initialize 2 empty arrays for the input image batch.
-        pairs = np.zeros(shape=(2, batch_size, *img_dim))
+        # pairs = np.zeros(shape=(2, batch_size, *img_dim))
+        first = np.zeros(shape=(batch_size, *img_dim))
+        second = np.zeros(shape=(batch_size. *img_dim))
 
         # Initialize vector for the targets, and make one half
         # of it '1's, so 2nd half of batch has same class.
@@ -541,7 +543,7 @@ class Dataset(Data):
             # For 1st image pair:
             # Sample a character ID from characters in this category.
             idx1 = rand(low=0, high=self.n_examples)
-            pairs[0, i, :, :, :] = self._images[cat1, idx1].reshape(img_dim)
+            first[i, :, :, :] = self._images[cat1, idx1].reshape(img_dim)
 
             # For 2nd image pair:
             idx2 = rand(low=0, high=self.n_examples)
@@ -553,7 +555,9 @@ class Dataset(Data):
                 # Add a random number to the category modulo n classes to ensure
                 # 2nd image has different category.
                 cat2 = (cat1 + rand(1, self.n_classes)) % self.n_classes
-            pairs[1, i, :, :, :] = self._images[cat2, idx2].reshape(img_dim)
+            second[i, :, :, :] = self._images[cat2, idx2].reshape(img_dim)
+
+        pairs = [first, second]
 
         return pairs, targets
 

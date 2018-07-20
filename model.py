@@ -20,13 +20,12 @@
 import tensorflow as tf
 
 from tensorflow import keras
-import numpy as np
 
 
 class SiameseNetwork(keras.Model):
     """Siamese Neural network for few shot learning."""
 
-    def __init__(self, num_classes: int=1, **kwargs):
+    def __init__(self, num_classes: int = 1, **kwargs):
         super(SiameseNetwork, self).__init__(name='SiameseNetwork')
 
         # Positional Arguments.
@@ -34,7 +33,7 @@ class SiameseNetwork(keras.Model):
 
         # Keyword Arguments.
         # self.batch_size = kwargs.get('batch_size', 16)
-        self.in_shape = kwargs.get('input_shape', (2, 105, 105, 1))
+        self.in_shape = kwargs.get('input_shape', (105, 105, 1))
 
         # Input layer.
         self.input_layer = keras.layers.InputLayer(input_shape=self.in_shape,
@@ -42,25 +41,22 @@ class SiameseNetwork(keras.Model):
 
         # 1st layer (64@10x10)
         self.conv1 = keras.layers.Conv2D(filters=64, kernel_size=(10, 10),
-                                         kernel_regularizer=keras.regularizers.l2,
+                                         #  input_shape=self.in_shape,
                                          activation=keras.activations.relu)
         self.pool1 = keras.layers.MaxPool2D(pool_size=(2, 2))
 
         # 2nd layer (128@7x7)
         self.conv2 = keras.layers.Conv2D(filters=128, kernel_size=(7, 7),
-                                         kernel_regularizer=keras.regularizers.l2,
                                          activation=tf.keras.activations.relu)
         self.pool2 = keras.layers.MaxPool2D(pool_size=(2, 2))
 
         # 3rd layer (128@4x4)
         self.conv3 = keras.layers.Conv2D(filters=128, kernel_size=(4, 4),
-                                         kernel_regularizer=keras.regularizers.l2,
                                          activation=keras.activations.relu)
         self.pool3 = keras.layers.MaxPool2D(pool_size=(2, 2))
 
         # 4th layer (265@4x4)
         self.conv4 = keras.layers.Conv2D(filters=256, kernel_size=(4, 4),
-                                         kernel_regularizer=keras.regularizers.l2,
                                          activation=keras.activations.relu)
         self.pool4 = keras.layers.MaxPool2D(pool_size=(2, 2))
 
@@ -213,7 +209,18 @@ class SiameseNetwork(keras.Model):
 
 
 if __name__ == '__main__':
+    import numpy as np
+
     net = SiameseNetwork(num_classes=1)
 
     net.compile(optimizer=keras.optimizers.Adam(lr=1e-3),
                 loss=SiameseNetwork.contrastive_loss)
+
+    # Image pairs in `np.ndarray`.
+    first = np.random.randn(1, 105, 105, 1)
+    second = np.random.randn(1, 105, 105, 1)
+
+    # Converted to `tf.Tensor`.
+    pairs = [tf.constant(first), tf.constant(second)]
+
+    net(pairs)
