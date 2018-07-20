@@ -505,18 +505,34 @@ class Dataset(Data):
             yield pairs, target
 
     def get_batch(self, batch_size: int=128):
+        """Get a randomly sampled mini-batch of image pairs and corresponding targets.
+
+        Args:
+            batch_size (int, optional): Defaults to 128. Mini-batch size.
+
+        Returns:
+            tuple: image pairs and respective targets.
+        """
+
+        # Shorten usage of random number generator.
+        rand = np.random.randint
+
+        # Shorten usage of image dimension.
+        img_dim = self._width, self._height, self._channel
+
+        # Half `batch_size`.
+        half_batch = batch_size // 2
+
         # Randomly sample several classes (alphabet) to use in the batch.
-        categories = np.random.choice(self.n_classes, size=(batch_size,),
-                                      replace=False)
+        categories = np.random.choice(self.n_classes, size=(batch_size,))
 
         # Initialize 2 empty arrays for the input image batch.
-        pairs = [np.zeros(shape=(batch_size, self._height, self._width, self._channel))
-                 for i in range(2)]
+        pairs = np.zeros(shape=(2, batch_size, *img_dim))
 
         # Initialize vector for the targets, and make one half
         # of it '1's, so 2nd half of batch has same class.
         targets = np.zeros(shape=(batch_size,))
-        targets[batch_size // 2:] = 1
+        targets[half_batch:] = 1
 
         for i in range(batch_size):
             # Pick the i'th random class (alphabet).
@@ -524,23 +540,20 @@ class Dataset(Data):
 
             # For 1st image pair:
             # Sample a character ID from characters in this category.
-            idx1 = np.random.randint(low=0, high=self.n_examples)
-            pairs[0][i, :, :, :] = self._images[cat1, idx1]\
-                .reshape(self._width, self._height, self._channel)
+            idx1 = rand(low=0, high=self.n_examples)
+            pairs[0, i, :, :, :] = self._images[cat1, idx1].reshape(img_dim)
 
             # For 2nd image pair:
-            idx2 = np.random.randint(low=0, high=self.n_examples)
+            idx2 = rand(low=0, high=self.n_examples)
 
             # Pick images of same class for 1st half, different for 2nd half.
-            if i >= batch_size // 2:
+            if i >= half_batch:
                 cat2 = cat1
             else:
                 # Add a random number to the category modulo n classes to ensure
                 # 2nd image has different category.
-                cat2 = (cat1 + np.random.randint(1, self.n_classes)
-                        ) % self.n_classes
-            pairs[1][i, :, :, :] = self._images[cat2, idx2]\
-                .reshape(self._width, self._height, self._channel)
+                cat2 = (cat1 + rand(1, self.n_classes)) % self.n_classes
+            pairs[1, i, :, :, :] = self._images[cat2, idx2].reshape(img_dim)
 
         return pairs, targets
 
