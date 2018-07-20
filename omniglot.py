@@ -29,6 +29,9 @@ import matplotlib.gridspec as gridspec
 from PIL import Image
 from sklearn.utils import shuffle
 
+# Custom utility module.
+import utils
+
 # Base data & save directory.
 base_dir = 'datasets/'
 save_dir = 'saved/'
@@ -504,6 +507,7 @@ class Dataset(Data):
             pairs, target = self.get_batch(batch_size=batch_size)
             yield pairs, target
 
+    @utils.to_tensor
     def get_batch(self, batch_size: int=128):
         """Get a randomly sampled mini-batch of image pairs and corresponding targets.
 
@@ -529,7 +533,7 @@ class Dataset(Data):
         # Initialize 2 empty arrays for the input image batch.
         # pairs = np.zeros(shape=(2, batch_size, *img_dim))
         first = np.zeros(shape=(batch_size, *img_dim))
-        second = np.zeros(shape=(batch_size. *img_dim))
+        second = np.zeros(shape=(batch_size, *img_dim))
 
         # Initialize vector for the targets, and make one half
         # of it '1's, so 2nd half of batch has same class.

@@ -16,10 +16,10 @@
 """
 import tensorflow as tf
 
-from functools import wraps
+# from functools import wraps
 
 
-def to_tensor(func, *args, **kwargs):
+def to_tensor(func):
     """Decorator function to convert input pairs to tensors.
 
     Args:
@@ -29,12 +29,22 @@ def to_tensor(func, *args, **kwargs):
         any: Converted function.
     """
 
-    @wraps
-    def converter():
-        np_pairs, targets = func(*args, **kwargs)
+    # @wraps
+    def converter(*args, **kwargs):
+        """Wrapper function
 
-        # Convert numpyb pairs to Tensors.
-        pairs = [tf.constant(np_pairs[0]), tf.constant(np_pairs[1])]
+        Returns:
+          tuple: Input pairs & targets.
+        """
+
+        ret_type = kwargs.get('ret_type', 'np')
+
+        np_pairs, np_targets = func(*args, **kwargs)
+
+        # Convert numpy pairs & targets to Tensors.
+        pairs = [tf.constant(np_pairs[0], name="input1"),
+                 tf.constant(np_pairs[1], name="input2")]
+        targets = tf.constant(np_targets, name="target")
 
         return pairs, targets
 
