@@ -532,13 +532,13 @@ class Dataset(Data):
 
         # Initialize 2 empty arrays for the input image batch.
         # pairs = np.zeros(shape=(2, batch_size, *img_dim))
-        first = np.zeros(shape=(batch_size, *img_dim))
-        second = np.zeros(shape=(batch_size, *img_dim))
+        first = np.zeros(shape=(batch_size, *img_dim), dtype=np.float32)
+        second = np.zeros(shape=(batch_size, *img_dim), dtype=np.float32)
 
         # Initialize vector for the targets, and make one half
         # of it '1's, so 2nd half of batch has same class.
-        targets = np.zeros(shape=(batch_size,))
-        targets[half_batch:] = 1
+        targets = np.zeros(shape=(batch_size, 1), dtype=np.float32)
+        targets[half_batch:] = 1.
 
         for i in range(batch_size):
             # Pick the i'th random class (alphabet).
@@ -590,7 +590,7 @@ class Dataset(Data):
         second = second.reshape(N, self._width, self._height, self._channel)
 
         # Target
-        targets = np.zeros(shape=(N,))
+        targets = np.zeros(shape=(N,), dtype=np.float32)
         targets[0] = 1
 
         # Shuffle data.

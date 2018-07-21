@@ -42,7 +42,7 @@ class SiameseNetwork(keras.Model):
 
         # 1st layer (64@10x10)
         self.conv1 = keras.layers.Conv2D(filters=64, kernel_size=(10, 10),
-                                         #  input_shape=self.in_shape,
+                                         input_shape=self.in_shape,
                                          activation=keras.activations.relu)
         self.pool1 = keras.layers.MaxPool2D(pool_size=(2, 2))
 
@@ -97,6 +97,8 @@ class SiameseNetwork(keras.Model):
             a list of tensors if there are more than one outputs.
         """
 
+        training = kwargs.get('training', True)
+
         # Sister networks.
         first = self.__encoder(inputs[0])
         second = self.__encoder(inputs[1])
@@ -107,7 +109,9 @@ class SiameseNetwork(keras.Model):
         # Prediction.
         pred = self.prediction(distance)
 
-        return distance, pred
+        # Returns distance and prediction if not in training mode.
+        # return pred if training else distance, pred
+        return pred
 
     def compute_output_shape(self, input_shape):
         """You need to override this function if you want to use the
@@ -194,7 +198,7 @@ class SiameseNetwork(keras.Model):
             tf.Tensor: Encoded output.
         """
         # Input layer.
-        x = self.input_layer(x)
+        # x = self.input_layer(x)
 
         # Convolutional blocks.
         x = self.pool1(self.conv1(x))
