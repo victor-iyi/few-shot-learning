@@ -1,4 +1,4 @@
-"""Utility module for loading dataset..
+"""Utility module for few-shot learning.
 
    @author
      Victor I. Afolabi
@@ -8,7 +8,7 @@
 
    @project
      File: utils.py
-     Created on 18 May, 2018 @ 5:26 PM.
+     Created on 21 Jul, 2018 @ 5:26 AM.
 
    @license
      MIT License
@@ -16,11 +16,9 @@
 """
 import tensorflow as tf
 
-# from functools import wraps
-
 
 def to_tensor(func):
-    """Decorator function to convert input pairs to tensors.
+    """Decorator function to (maybe) convert input pairs to tensors.
 
     Args:
         func (any): Function to be wrapped.
@@ -29,22 +27,30 @@ def to_tensor(func):
         any: Converted function.
     """
 
-    # @wraps
     def converter(*args, **kwargs):
-        """Wrapper function
+        """Wrapper function.
 
+        Keyword Args:
+          ret_type (str, optional): Return type.
+            one of 'np', 'numpy' or 'tf', 'tensor'. Defaults to 'np'.
         Returns:
           tuple: Input pairs & targets.
         """
+        # Return types.
+        ret_types = ('np', 'numpy', 'tf', 'tensor')
 
-        ret_type = kwargs.get('ret_type', 'np')
+        # Default is numpy.
+        ret_type = kwargs.get('ret_type', ret_types[0])
 
         np_pairs, np_targets = func(*args, **kwargs)
 
-        # Convert numpy pairs & targets to Tensors.
-        pairs = [tf.constant(np_pairs[0], name="input1"),
-                 tf.constant(np_pairs[1], name="input2")]
-        targets = tf.constant(np_targets, name="target")
+        if ret_type.lower() in ret_types[:2]:
+            return np_pairs, np_targets
+        else:
+            # Convert numpy pairs & targets to Tensors.
+            pairs = [tf.constant(np_pairs[0], name="input1"),
+                     tf.constant(np_pairs[1], name="input2")]
+            targets = tf.constant(np_targets, name="target")
 
         return pairs, targets
 

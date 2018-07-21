@@ -646,7 +646,7 @@ class Dataset(Data):
         return obj
 
     def to_cache(self):
-        pass
+        self.save(self, 'omniglot')
 
     def _log(self, *args, **kwargs):
         """Custom logger method for debug purposes."""
