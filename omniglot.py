@@ -48,6 +48,13 @@ class Visualize(object):
 
     @staticmethod
     def image(image: np.ndarray, title: str, **kwargs):
+        """Visualize a single image.
+
+        Args:
+            image (np.ndarray): Image as a numpy array
+            title (str): Title of the plot.
+        """
+
         # Extract default keyword arguments.
         kwargs.setdefault('cmap', 'gray')
         smooth = kwargs.setdefault('smooth', False)
@@ -74,6 +81,20 @@ class Visualize(object):
 
     @staticmethod
     def runs(directory: str, index: int=1, title: str='', **kwargs):
+        """Plot a single run in the omniglot "all_runs" data file.
+
+        Args:
+            directory (str): Directory to a single run.
+            index (int, optional): Defaults to 1. Index to emphasized letter.
+            title (str, optional): Defaults to ''. Title of the plot.
+
+        Keyword Args:
+            smooth (bool, optional): Defaults to True. Smoothen images.
+
+            See `matplotlib.pyplot.imshow` for more options.
+                cmap (pyplot.cmap, optional): Defaults to 'gray'. See `plt.imshow`.
+        """
+
         # Keyword arguments.
         kwargs.setdefault('cmap', 'gray')
         smooth = kwargs.setdefault('smooth', True)
@@ -95,7 +116,7 @@ class Visualize(object):
                           for f in os.listdir(train_dir) if f[0] is not '.'])
 
         assert len(train) == len(test) == n_examples, \
-            f'{len(train)}, {len(test)} and {len(n_examples)} are not equal'
+            f'{len(train)}, {len(test)} and {len(n_examples)} are not equal.'
 
         # Class labels.
         with open(label_path, mode='r') as f:
@@ -148,19 +169,25 @@ class Visualize(object):
         idx = 0
         for row in range(n_rows):
             for col in range(n_cols):
+                # Plot test image on appropriate subplot.
                 ax_test = plt.subplot(gs_imgs_test[row, col])
                 ax_test.imshow(test[idx], **kwargs)
 
+                # Remove x & y ticks from test subplot.
                 ax_test.set_xticks([])
                 ax_test.set_yticks([])
 
+                # Plot train images on appropriate subplot.
                 ax_train = plt.subplot(gs_imgs_train[row, col])
                 ax_train.imshow(train[idx], **kwargs)
 
+                # Remove x & y ticks from train subplot.
                 ax_train.set_xticks([])
                 ax_train.set_yticks([])
 
+                # Increase indexing for train & test images.
                 idx += 1
+
         # Entire figure's title.
         plt.suptitle(title)
 
@@ -170,6 +197,15 @@ class Visualize(object):
 
     @staticmethod
     def symbols(directory: str, **kwargs):
+        """Plot all letters in a given letter directory.
+
+        Args:
+            directory (str): Path to an Omniglot letter directory.
+
+        Raises:
+            FileNotFoundError: `directory` is not a valid directory.
+        """
+
         if not os.path.isdir(directory):
             raise FileNotFoundError(f'{directory} is not a valid directory!')
 
@@ -236,7 +272,22 @@ class Data(object):
         return self.__repr__()
 
     @staticmethod
-    def extract(path: str, extract_dir=data_dir):
+    def extract(path: str, extract_dir: str=data_dir, force: bool=False):
+        """Extract a zip of tar file if not already extracted.
+
+        Args:
+            path (str): Path to a zipped or tarball.
+            extract_dir (str, optional): Defaults to data_dir. Path to be extracted to.
+            force (bool, optional): Defaults to False. Force extraction even if already extracted.
+
+        Raises:
+            FileNotFoundError: Coult not find `path`.
+            ValueError: `path must be a zipped or a tarball.
+
+        Returns:
+            str: Extracted file name.
+        """
+
         # Ensure the file exists.
         if not os.path.isfile(path):
             raise FileNotFoundError(f'Could not find {path}')
@@ -250,7 +301,7 @@ class Data(object):
             # Extract zipped file.
             with zipfile.ZipFile(path, mode="r") as z:
                 z.extractall(data_dir)
-        elif path.endswith((".tar.gz", ".tgz")):
+        elif tarfile.is_tarfile(path):
             print(f'Extracing {path}...')
             # Unpack tarball.
             with tarfile.open(path, mode="r:gz") as t:
@@ -274,24 +325,24 @@ class Data(object):
         """Load image pas a numpy array.
 
         Args:
-        path (str): Path to image to be loaded.
-        dtype (np.dtype, optional): Defaults to np.float32. NumPy array data type.
-        size (tuple, None): Defaults to None. Image resize dimension.
-        flatten (bool, optional): Defaults to False. Maybe flatten image.
-        grayscale (bool, optional): Defaults to False. Convert image to grayscale or not.
+            path (str): Path to image to be loaded.
+            dtype (np.dtype, optional): Defaults to np.float32. NumPy array data type.
+            size (tuple, None): Defaults to None. Image resize dimension.
+            flatten (bool, optional): Defaults to False. Maybe flatten image.
+            grayscale (bool, optional): Defaults to False. Convert image to grayscale or not.
 
         Raises:
-        ImportError: Please make sure you have Pillow installed.
-            Run `pip3 install Pillow` to install Pillow.
+            ImportError: Please make sure you have Pillow installed.
+                Run `pip3 install Pillow` to install Pillow.
 
-        FileNotFoundError: `path` was not found!
-            Double check file path to make sure it exits, or
-            use guard checks like `os.path.isfile(path)`
+            FileNotFoundError: `path` was not found!
+                Double check file path to make sure it exits, or
+                use guard checks like `os.path.isfile(path)`
 
         Returns:
-        array-like: Image as a numpy array with dimension 2D or 3D array
-            *(-if image is colored or grayscale image)*.
-            If `flatten` is True. Returns a 1D-array.
+            array-like: Image as a numpy array with dimension 2D or 3D array
+                *(-if image is colored or grayscale image)*.
+                If `flatten` is True. Returns a 1D-array.
         """
         try:
             # Open image as a Pillow object.
@@ -324,6 +375,20 @@ class Data(object):
     @staticmethod
     def get_images(directory: str=None, paths: str=None,
                    dtype: np.dtype=np.float32):
+        """Loadd all images from a directory or given image paths.
+
+        Args:
+            directory (str, optional): Defaults to None. Images directory.
+            paths (str, optional): Defaults to None. Given image paths.
+            dtype (np.dtype, optional): Defaults to np.float32. Data type.
+
+        Raises:
+            ValueError: Either `directory` or `paths` must be provided!
+
+        Returns:
+            array-like: A 1-D numpy array of loaded images.
+        """
+
         if directory is not None:
             images = [Data.load_image(p) for p in Data._listdir(directory)]
         elif paths is not None:
@@ -331,11 +396,24 @@ class Data(object):
         else:
             raise ValueError('Either `directory` or `paths` must be provided!')
 
+        # Convert to numpy array
         images = np.array(images, dtype=dtype)
+
         return images
 
     @staticmethod
-    def _listdir(root, tolist=False):
+    def _listdir(root: str, tolist: bool=False):
+        """List files and directories in a root directory without dot files.
+
+        Args:
+            root (str): Root directory.
+            tolist (bool, optional): Defaults to False. Returns a generator
+                if set to False otherwise a list.
+
+        Returns:
+            iterable: Returns a generator if `tolist` is False otherwise list.
+        """
+
         if tolist:
             # List comprehension.
             return [os.path.join(root, f) for f in os.listdir(root)
@@ -347,6 +425,15 @@ class Data(object):
 
     @staticmethod
     def _filter_files(files: iter):
+        """Remove ignored files from a list of paths.
+
+        Args:
+            files (iter): List of file paths.
+
+        Returns:
+            list: List of filtered files.
+        """
+
         ignored_list = ('', '.DS_Store')
 
         def ignore(x: str):
@@ -367,6 +454,7 @@ class Dataset(Data):
                                  self._mode.lower())
 
         # Extract keyword arguments.
+        force = kwargs.get('force', False)
         self._cache = kwargs.get('cache', True)
         self._cache_dir = kwargs.get('cache_dir', cache_dir)
         self._verbose = kwargs.get('verbose', 1)
@@ -380,8 +468,8 @@ class Dataset(Data):
             # Pre-process directory into pickle.
             self._data_dir = path
             self._images, self._targets = self.load(self._data_dir)
-        elif path.endswith((".zip", ".gz", ".tar.gz")):
-            self._data_dir = Dataset.extract(path)
+        elif zipfile.is_zipfile(path) or tarfile.is_tarfile(path):
+            self._data_dir = Dataset.extract(path, force=force)
             # Pre-process directory to be pickled.
             self._images, self._targets = self.load(self._data_dir)
         elif path.endswith((".pkl", ".pickle")):

@@ -146,7 +146,7 @@ class SiameseNetwork(keras.Model):
         loss = tf.maximum(y_ture - y_pred + alpha, 0)
 
         # Sum over all images.
-        return tf.reduce_sum(loss, axis=1, name="Triplet_Loss")
+        return tf.reduce_sum(loss, name="Triplet_Loss")
 
     @staticmethod
     def contrastive_loss(y_true, y_pred, alpha=0.2):
