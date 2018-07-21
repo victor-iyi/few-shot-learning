@@ -45,6 +45,7 @@ n_runs = n_examples = 20
 
 
 class Visualize(object):
+    """Helper class for visualizing images in omniglot dataset."""
 
     @staticmethod
     def image(image: np.ndarray, title: str, **kwargs):
@@ -101,7 +102,10 @@ class Visualize(object):
 
         # Update keyword arguments by matplotlib.
         kwargs.pop("smooth")
-        kwargs.update({"interpolation": 'spline16' if smooth else 'nearest'})
+        kwargs.update({
+            # Change interpolation to smoothen image.
+            "interpolation": 'spline16' if smooth else 'nearest'
+        })
 
         # Run files and sub directories.
         test_dir = os.path.join(directory, 'test')
@@ -443,8 +447,94 @@ class Data(object):
 
 
 class Dataset(Data):
+    """Dataset helper class for loading, processing and saving omniglot dataset.
+
+    Args:
+        Data (omniglot.Data): Base class.
+
+    Raises:
+        FileNotFoundError: Could not find a file.
+        ValueError: Invalid argument for correct type.
+        UserWarning: Runtime warning as part of API design.
+
+    Examples:
+        ```python
+        >>> import os
+        >>>
+        >>> # Import Dataset & data directory.
+        >>> from omniglot import Dataset, data_dir
+        >>>
+        >>> # Path to training dataset (compressed).
+        >>> train_dir = os.path.join(data_dir, 'images_background.tar.gz')
+        >>>
+        >>> # Training dataset.
+        >>> dataset = Dataset(path=train_dir, mode=Dataset.Mode.TRAIN)
+        Extracing datasets/compressed/images_background.tar.gz...
+        Sucessfully extracted to datasets/extracted/images_background
+        Loading cached images & corresponding targets.
+        >>>
+        >>> # Print dataset object.
+        >>> print(f'dataset = {dataset}')
+        dataset = Dataset(mode='TRAIN', cache=True, cache_dir='saved/images_background/train')
+        >>>
+        >>> # Get dataset shape.
+        >>> print(f'\nDataset: {dataset.shape}')
+        Dataset: (964, 105, 105, 1)
+        ```
+
+    Class Methods:
+        @classmethod
+        from_cache(cls, path: str):
+            Instantiate a class from a picked file.
+
+        @classmethod
+        from_xy(cls, X: np.ndarray, y: np.ndarray):
+            Instantiate from images & targets.
+
+        create(self, path: str, dtype: np.dtype=np.float32):
+            Create image pairs & respective target labels.
+
+    Instance Methods:
+        next_batch(self, batch_size: int=128):
+            Batch generator. Gets the next image pairs and corresponding target.
+
+        @utils.to_tensor
+        get_batch(self, batch_size: int=128):
+            Get a randomly sampled mini-batch of image pairs and corresponding targets.
+
+        one_shot_task(self, N: int):
+            Create image pair for N-way one shot learning task.
+
+        save(self, obj: any, name: str):
+            Save object for easy retrival.
+
+        load(self, name: str):
+            Load saved/cached objects as npy or pickle format.
+
+        to_cache(self):
+            Cache current Dataset object.
+
+        _log(self, *args, **kwargs):
+            Custom logger method for debug purposes.
+
+
+    Attributes:
+        shape (tuple): Shape of dataset. classes x width x height x channel.
+        images (np.ndarray): Processed images for all classes.
+        targets (np.ndarray): Processed target labels 1 for correct class 0 otherwise.
+
+    """
 
     def __init__(self, path: str=None, mode=None, **kwargs):
+        """Dataset.__init__
+
+        Args:
+            path (str, optional): Defaults to None. Path to a compressed file or folder.
+            mode (Dataset.Mode, optional): Defaults to None. Processing mode.
+
+        Raises:
+            FileNotFoundError: `path` was not found.
+        """
 
         # Use argument or `omniglot.data_dir`.
         path = path or data_dir
@@ -467,11 +557,11 @@ class Dataset(Data):
         if os.path.isdir(path):
             # Pre-process directory into pickle.
             self._data_dir = path
-            self._images, self._targets = self.load(self._data_dir)
+            self._images, self._targets = self.create(self._data_dir)
         elif zipfile.is_zipfile(path) or tarfile.is_tarfile(path):
             self._data_dir = Dataset.extract(path, force=force)
             # Pre-process directory to be pickled.
-            self._images, self._targets = self.load(self._data_dir)
+            self._images, self._targets = self.create(self._data_dir)
         elif path.endswith((".pkl", ".pickle")):
             pass
         else:
@@ -486,13 +576,25 @@ class Dataset(Data):
                 f"cache_dir='{self._cache_dir}')")
 
     def __getitem__(self, idx: int):
-        pass
+        return NotImplemented
 
     def __len__(self):
         return self.len(self._images)
 
     @classmethod
     def from_cache(cls, path: str):
+        """Instantiate a class from a picked file.
+
+        Args:
+            path (str): Path to a cached file.
+
+        Raises:
+            ValueError: `path` is not a pickle file.
+
+        Returns:
+            Dataset: Instance of Dataset.
+        """
+
         if not os.path.isfile(path):
             FileNotFoundError(f"{path} not found")
 
@@ -506,6 +608,16 @@ class Dataset(Data):
 
     @classmethod
     def from_xy(cls, X: np.ndarray, y: np.ndarray):
+        """Instantiate from images & targets.
+
+        Args:
+            X (np.ndarray): List of image pairs.
+            y (np.ndarray): Corresponding target labels.
+
+        Returns:
+            Dataset: Instance of Dataset class.
+        """
+
         # Create an instance..
         inst = cls()
 
@@ -514,9 +626,19 @@ class Dataset(Data):
 
         return inst
 
-    def load(self, path: str, dtype: np.dtype=np.float32):
-        X = self.read("images")
-        y = self.read("targets")
+    def create(self, path: str, dtype: np.dtype=np.float32):
+        """Create image pairs & respective target labels.
+
+        Args:
+            path (str): Path to dataset files.
+            dtype (np.dtype, optional): Defaults to np.float32. Data type.
+
+        Returns:
+            tuple: images pairs & label.
+        """
+
+        X = self.load("images")
+        y = self.load("targets")
 
         # Return cached images & labels.
         if X is not False and y is not False:
@@ -578,21 +700,6 @@ class Dataset(Data):
         self._log(f'\nImages = {X.shape}\tTargets = {y.shape}\n')
 
         return X, y
-
-    def next_batch(self, batch_size: int=128):
-        """Batch generator. Gets the next image pairs and corresponding target.
-
-            Args:
-                batch_size (int, optional): Defaults to 128. Mini batch size.
-
-            Yields:
-                tuple (pairs, target) -- Image pairs & target (0 or 1)
-                    target=1 if pairs are the same letter & 0 otherwise.
-        """
-
-        while True:
-            pairs, target = self.get_batch(batch_size=batch_size)
-            yield pairs, target
 
     @utils.to_tensor
     def get_batch(self, batch_size: int=128):
@@ -687,6 +794,21 @@ class Dataset(Data):
 
         return pairs, targets
 
+    def next_batch(self, batch_size: int=128):
+        """Batch generator. Gets the next image pairs and corresponding target.
+
+            Args:
+                batch_size (int, optional): Defaults to 128. Mini batch size.
+
+            Yields:
+                tuple (pairs, target) -- Image pairs & target (0 or 1)
+                    target=1 if pairs are the same letter & 0 otherwise.
+        """
+
+        while True:
+            pairs, target = self.get_batch(batch_size=batch_size)
+            yield pairs, target
+
     def save(self, obj: any, name: str):
         """Save object for easy retrival.
 
@@ -714,7 +836,16 @@ class Dataset(Data):
 
         self._log(f'Cached "{name}" to "{path}"')
 
-    def read(self, name: str):
+    def load(self, name: str):
+        """Load saved/cached objects as npy or pickle format.
+
+        Args:
+            name (str): Name of file without extension.
+
+        Returns:
+            object: Loaded object.
+        """
+
         npy_path, pkl_path = f'{name}.npy', f'{name}.pkl'
 
         npy_path = os.path.join(self._cache_dir, npy_path)
@@ -734,6 +865,8 @@ class Dataset(Data):
         return obj
 
     def to_cache(self):
+        """Cache current Dataset object."""
+
         self.save(self, 'omniglot')
 
     def _log(self, *args, **kwargs):
@@ -744,21 +877,37 @@ class Dataset(Data):
 
     @property
     def shape(self):
+        """Shape of dataset. classes x width x height x channel.
+
+        Returns:
+            tuple: Dataset shape.
+        """
+
         _shape = (self.n_classes, self._width, self._height, self._channel)
         return _shape
 
     @property
     def images(self):
+        """Processed images for all classes.
+
+        Returns:
+            np.ndarray: array-like containing processed images.
+        """
+
         return self._images
 
     @property
     def targets(self):
+        """Processed target labels 1 for correct class 0 otherwise.
+
+        Returns:
+            np.ndarray: 1-D array of target labels.
+        """
+
         return self._targets
 
 
 if __name__ == '__main__':
-    # test = Dataset(path=os.path.join(data_dir, 'images_evaluation'))
-
     train = Dataset(path=os.path.join(data_dir, 'images_background'))
     pairs, target = train.get_batch(batch_size=6)
     print(pairs[0].shape, pairs[1].shape, target.shape)
