@@ -440,7 +440,7 @@ class Dataset(Data):
         self._log('Loading images & targets')
 
         # Images, labels & class indices.
-        X, y, class_idx = [], [], 0
+        X, y, idx = [], [], 0
 
         # Table header.
         print(f'ID  Alphabet {"Status":>42}')
@@ -458,7 +458,7 @@ class Dataset(Data):
 
                     # Images & class index.
                     X.append(self.get_images(paths=img_paths))
-                    y.append(class_idx)
+                    y.append(idx)
 
                     # Everything went okay.
                     status = True
@@ -474,11 +474,10 @@ class Dataset(Data):
                 # Get Alphabet's name.
                 if self._verbose:
                     name = os.path.basename(root).replace('_', ' ')
-                    print(
-                        f'{class_idx:02d}. {name:<45} {"DONE" if status else "ERROR"}')
+                    print(f'{idx:02d}. {name:<45} {"DONE" if status else "ERROR"}')
 
                 # Increment class index.
-                class_idx += 1
+                idx += 1
 
         # Images & targets.
         X, y = np.stack(X), np.vstack(y)
