@@ -32,10 +32,6 @@ class SiameseNetwork(keras.Model):
         # Positional Arguments.
         self.num_classes = num_classes
 
-        # Keyword Arguments.
-        # self.batch_size = kwargs.get('batch_size', 16)
-        self.in_shape = kwargs.get('input_shape', (105, 105, 1))
-
         # Input layer.
         self.input_layer = keras.layers.InputLayer(input_shape=self.in_shape,
                                                    dtype=tf.float32, name='Images')
@@ -149,6 +145,24 @@ class SiameseNetwork(keras.Model):
         return tf.reduce_sum(loss, name="Triplet_Loss")
 
     @staticmethod
+    def binary_crossentropy(y_true, y_pred):
+        """Binary crossentropy between an output tensor and a target tensor.
+
+        Args:
+            target: A tensor with the same shape as `output`.
+            output: A tensor.
+            from_logits: Whether `output` is expected to be a logits tensor.
+                By default, we consider that `output`
+                encodes a probability distribution.
+
+        Returns:
+            tf.tensor: Binary crossentropy loss.
+        """
+
+        # Binary crossentropy loss function.
+        return keras.losses.binary_crossentropy(y_true, y_pred)
+
+    @staticmethod
     def contrastive_loss(y_true, y_pred, alpha=0.2):
         """Contrastive loss function.
 
@@ -197,9 +211,6 @@ class SiameseNetwork(keras.Model):
         Returns:
             tf.Tensor: Encoded output.
         """
-        # Input layer.
-        # x = self.input_layer(x)
-
         # Convolutional blocks.
         x = self.pool1(self.conv1(x))
         x = self.pool2(self.conv2(x))

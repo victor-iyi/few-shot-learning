@@ -296,6 +296,15 @@ class Data(object):
         if not os.path.isfile(path):
             raise FileNotFoundError(f'Could not find {path}')
 
+        # Retrive extracted directory.
+        extracted_dir = os.path.basename(path).split('.')[0]
+        extracted_dir = os.path.join(data_dir, extracted_dir)
+
+        # Don't extract if it's already been extracted.
+        if os.path.isdir(extracted_dir) and not force:
+            print(f'Already extracted to {extracted_dir}')
+            return extracted_dir
+
         # Create extract directory if it doesn't exist.
         if not os.path.isdir(data_dir):
             os.makedirs(data_dir)
@@ -313,10 +322,6 @@ class Data(object):
         else:
             # Unrecognized compressed file.
             raise ValueError(f'{path} must a zipped or tarball file')
-
-        # Retrive extracted directory.
-        extracted_dir = os.path.basename(path).split('.')[0]
-        extracted_dir = os.path.join(data_dir, extracted_dir)
 
         # Display & return extracted directory.
         print(f'Sucessfully extracted to {extracted_dir}')
