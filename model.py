@@ -27,14 +27,31 @@ class SiameseNetwork(keras.Model):
     """Siamese Neural network for few shot learning."""
 
     def __init__(self, num_classes: int = 1, **kwargs):
+        """Implementation of *Siamese Network* as proposed in
+        [this](http://www.cs.cmu.edu/~rsalakhu/papers/oneshot1.pdf) by
+        Gregory Koch, Richard Zemel and Ruslan Salakhutdinov.
+
+        Args:
+            num_classes (int, optional): Defaults to 1. Number of output classes
+                in the last layer (prediction layer).
+
+        Keyword Args:
+            input_shape (tuple, optional): Defaults to (105, 105, 1). Input shape
+                for a single image. Shape in the form: `(width, height, channel)`.
+
+        """
+
         super(SiameseNetwork, self).__init__(name='SiameseNetwork')
 
         # Positional Arguments.
         self.num_classes = num_classes
 
-        # Input layer.
-        self.input_layer = keras.layers.InputLayer(input_shape=self.in_shape,
-                                                   dtype=tf.float32, name='Images')
+        # Keyword Arguments.
+        self.in_shape = kwargs.get('input_shape', (105, 105, 1))
+
+        # # Input layer.
+        # self.input_layer = keras.layers.InputLayer(input_shape=self.in_shape,
+        #                                            dtype=tf.float32, name='Images')
 
         # 1st layer (64@10x10)
         self.conv1 = keras.layers.Conv2D(filters=64, kernel_size=(10, 10),
