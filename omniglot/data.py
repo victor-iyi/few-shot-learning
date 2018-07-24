@@ -877,7 +877,7 @@ class Dataset(Data):
     def to_cache(self):
         """Cache current Dataset object."""
 
-        self.save(self, 'omniglot')
+        self.save(self, f'omniglot.{self._mode}'.lower())
 
     def _log(self, *args, **kwargs):
         """Custom logger method for debug purposes."""

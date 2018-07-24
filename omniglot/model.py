@@ -27,9 +27,9 @@ class SiameseNetwork(keras.Model):
     """Siamese Neural network for few shot learning."""
 
     def __init__(self, num_classes: int = 1, **kwargs):
-        """Implementation of *Siamese Network* as proposed in
-        [this](http://www.cs.cmu.edu/~rsalakhu/papers/oneshot1.pdf) by
-        Gregory Koch, Richard Zemel and Ruslan Salakhutdinov.
+        """Implementation of *Siamese Network* with parameter specifications
+        as proposed in [this](http://www.cs.cmu.edu/~rsalakhu/papers/oneshot1.pdf)
+        by Gregory Koch, Richard Zemel and Ruslan Salakhutdinov.
 
         Args:
             num_classes (int, optional): Defaults to 1. Number of output classes
