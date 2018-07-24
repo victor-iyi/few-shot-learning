@@ -43,6 +43,9 @@ class SiameseNetwork(keras.Model):
 
         super(SiameseNetwork, self).__init__(name='SiameseNetwork')
 
+        # Network built as a Keras Model.
+        self.is_estimator = False
+
         # Positional Arguments.
         self.num_classes = num_classes
 
@@ -141,6 +144,44 @@ class SiameseNetwork(keras.Model):
         shape = tf.TensorShape(input_shape).as_list()
         shape[-1] = self.num_classes
         return tf.TensorShape(shape)
+
+    def callbacks(self, save_dir: str, **kwargs):
+        """Training callbacks.
+
+        Args:
+            save_dir (str): Save directory.
+
+        Returns:
+            list: List of callbacks.
+        """
+        # Saved model filepath.
+        filepath = save_dir + '/model-{epoch:03d}.h5'
+
+        # Defaults to save best model.
+        kwargs.setdefault('save_best_only', True)
+
+        # Model checkpoint callback.
+        checkpoint = keras.callbacks.ModelCheckpoint(filepath, **kwargs)
+
+        return [checkpoint]
+
+    def to_estimator(self):
+        """Convert this model to `tf.estimator`.
+
+        Returns:
+            tf.estimator: Estimator model of current keras model.
+        """
+        # Current Keras model.
+        keras_model = self
+
+        # Convert keras model to `tf.estimator`.
+        self = keras.estimator.model_to_estimator(keras_model=keras_model,
+                                                  model_dir='saved/models/estimator')
+        # Current object is now a tf.estimator object.
+        self.is_estimator = True
+
+        # Return estimator model.
+        return self
 
     @staticmethod
     def triplet_loss(y_true, y_pred, alpha=0.2):

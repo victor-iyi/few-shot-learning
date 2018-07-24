@@ -524,6 +524,7 @@ class Dataset(Data):
 
 
     Attributes:
+        cache_dir (str): Directory where files are saved.
         shape (tuple): Shape of dataset. classes x width x height x channel.
         images (np.ndarray): Processed images for all classes.
         targets (np.ndarray): Processed target labels 1 for correct class 0 otherwise.
@@ -879,6 +880,16 @@ class Dataset(Data):
 
         if self._verbose:
             print(*args, **kwargs)
+
+    @property
+    def cache_dir(self):
+        """Directory where files are saved.
+
+        Returns:
+            str: Cache directory.
+        """
+
+        return self._cache_dir
 
     @property
     def shape(self):
