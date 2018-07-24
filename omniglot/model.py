@@ -1,7 +1,7 @@
 """Helper class for building Siamese model for One-shot learning.
 
    @description
-     For visualizing, pre-processing and loading the Omniglot dataset.
+     For training, validating/evaluating & predictions with SiameseNetwork.
 
    @author
      Victor I. Afolabi
