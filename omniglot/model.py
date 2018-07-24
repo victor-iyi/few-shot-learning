@@ -43,14 +43,23 @@ class SiameseNetwork(keras.Model):
 
         super(SiameseNetwork, self).__init__(name='SiameseNetwork')
 
-        # Network built as a Keras Model.
-        self.is_estimator = False
-
         # Positional Arguments.
         self.num_classes = num_classes
 
+        # Network built as a Keras Model.
+        self.is_estimator = False
+
         # Keyword Arguments.
+        self._verbose = kwargs.get('verbose', 1)
         self.in_shape = kwargs.get('input_shape', (105, 105, 1))
+        self.model_dir = kwargs.get('model_dir', 'saved/models/').rstrip('/')
+
+        # Create model directory if it doesn't already exit.
+        if not tf.gfile.IsDirectory(self.model_dir):
+            tf.gfile.MakeDirs(self.model_dir)
+
+        # Path to save model's weights.
+        self.model_weights = f'{self.model_dir}/weights.h5'
 
         # # Input layer.
         # self.input_layer = keras.layers.InputLayer(input_shape=self.in_shape,
@@ -143,19 +152,30 @@ class SiameseNetwork(keras.Model):
 
         shape = tf.TensorShape(input_shape).as_list()
         shape[-1] = self.num_classes
+
         return tf.TensorShape(shape)
 
-    def callbacks(self, save_dir: str, **kwargs):
-        """Training callbacks.
+    def callbacks(self, **kwargs):
+        """Callbacks during training the models.
 
-        Args:
-            save_dir (str): Save directory.
+        Keyword Args:
+            See `keras.callbacks.ModelCheckpoint`.
+
+        Raises:
+            NotImplementedError: `keras.save_model` hasn't been
+                implemented for model subclassing.
 
         Returns:
             list: List of callbacks.
         """
+
+        # Saving model isn't implemented yet for subclassed models in Keras.
+        raise NotImplementedError(
+            "`keras.save_model` hasn't been implemented for model subclassing."
+        )
+
         # Saved model filepath.
-        filepath = save_dir + '/model-{epoch:03d}.h5'
+        filepath = f'{ self.model_dir}/model-{"epoch:03d"}.h5'
 
         # Defaults to save best model.
         kwargs.setdefault('save_best_only', True)
@@ -298,3 +318,5 @@ if __name__ == '__main__':
     pairs = [tf.constant(first), tf.constant(second)]
 
     net(pairs)
+
+    net.summary()

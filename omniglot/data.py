@@ -546,8 +546,9 @@ class Dataset(Data):
         path = path or data_dir
         self._mode = mode or Dataset.Mode.TRAIN
 
-        cache_dir = os.path.join(save_dir, os.path.basename(path).split('.')[0],
-                                 self._mode.lower())
+        # Retrive cache directory.
+        cache_dir = os.path.basename(path).split('.')[0]
+        cache_dir = os.path.join(save_dir, cache_dir)
 
         # Extract keyword arguments.
         force = kwargs.get('force', False)
@@ -764,6 +765,9 @@ class Dataset(Data):
         pairs = [first, second]
 
         return pairs, targets
+
+    # Alias for `Dataset.get_batch`.
+    get = get_batch
 
     def one_shot_task(self, N: int):
         """Create image pair for N-way one shot learning task.

@@ -14,7 +14,15 @@
      MIT License
      Copyright (c) 2018. Victor I. Afolabi. All rights reserved.
 """
+
+import numpy as np
 import tensorflow as tf
+
+
+__all__ = [
+    'np_input_fn', 'tf_input_fn',
+    'to_tensor', 'make_dataset'
+]
 
 
 def to_tensor(func):
@@ -57,42 +65,7 @@ def to_tensor(func):
     return converter
 
 
-def np_input_fn(x, y=None, epochs=1, **kwargs):
-    """NumPy input function.
-
-    Args:
-        x (np.ndarray): Input pairs.
-        y (np.ndarray, optional): Defaults to None. 1-D target labels.
-        epochs (int, optional): Defaults to 1. Number of training epochs.
-
-    Returns:
-        any: Function, that has signature of () -> (dict of `x`, `y`)
-    """
-    # X feature columns.
-    x = {'input_1': x[0], 'input_2': x[1]}
-
-    # Create a numpy input function.
-    fn = tf.estimator.inputs.numpy_input_fn(x=x, y=y,
-                                            num_epochs=epochs,
-                                            **kwargs)
-    return fn
-
-
-def tf_input_fn(x, y, **kwargs):
-    """TensorFlow input function using the `tf.data` API.
-
-    Args:
-        x (np.ndarray or tf.Tensor): Input pairs.
-        y (labels): 1-D target labels.
-
-    Returns:
-        any: TF_ESTIMATOR  input function.
-    """
-
-    return lambda: make_dataset(x, y, **kwargs)
-
-
-def make_dataset(features, labels=None, **kwargs):
+def make_dataset(features: np.ndarray, labels: np.ndarray=None, **kwargs):
     """Create and transform input data using the TF_DATA API.
 
     Args:
@@ -122,3 +95,64 @@ def make_dataset(features, labels=None, **kwargs):
     dataset = dataset.repeat(count=repeat_count)
 
     return dataset
+
+
+def np_input_fn(x: np.ndarray, y: np.ndarray=None, epochs: int=1, **kwargs):
+    """NumPy input function.
+
+    Args:
+        x (np.ndarray): Input pairs.
+        y (np.ndarray, optional): Defaults to None. 1-D target labels.
+        epochs (int, optional): Defaults to 1. Number of training epochs.
+
+    Keyword Args:
+        See `tf.estimator.inputs.numpy_input_fn`.
+
+    Returns:
+        any: Function, that has signature of () -> (dict of `x`, `y`)
+    """
+    # X feature columns.
+    x = {'input_1': x[0], 'input_2': x[1]}
+
+    # Default Keyword arguments.
+    kwargs.setdefault('shuffle', False)
+    kwargs.setdefault('num_epochs', epochs)
+
+    # Create a numpy input function.
+    fn = tf.estimator.inputs.numpy_input_fn(x=x, y=y, **kwargs)
+
+    return fn
+
+
+def tf_input_fn(x: np.ndarray, y: np.ndarray, **kwargs):
+    """TensorFlow input function using the `tf.data` API.
+
+    Args:
+        x (np.ndarray or tf.Tensor): Input pairs.
+        y (labels): 1-D target labels.
+
+    Keyword Args:
+        See `utils.make_dataset`.
+
+    Returns:
+        any: TF_ESTIMATOR  input function.
+    """
+    # For input pairs.
+    x = {'input_1': x[0], 'input_2': x[1]}
+
+    return lambda: make_dataset(x, y, **kwargs)
+
+
+if __name__ == '__main__':
+    # Image pairs.
+    pair1 = np.random.randn(500, 105, 105, 1)
+    pair2 = np.random.randn(500, 105, 105, 1)
+
+    # Dummy dataset.
+    pairs = np.array([pair1, pair2], dtype=np.int32)
+    labels = np.random.choice(2, size=500)
+    print(pairs.shape, labels.shape)
+
+    # Test numpy & tensor input functions.
+    print(np_input_fn(pairs, labels))
+    print(tf_input_fn(pairs, labels)())
