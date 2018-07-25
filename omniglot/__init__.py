@@ -24,6 +24,7 @@ from omniglot.data import n_runs, compressed_dir, data_dir, base_dir
 
 from omniglot.model import SiameseNetwork
 
+
 __all__ = [
     # Dataset.
     'base_dir', 'data_dir',
