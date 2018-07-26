@@ -1,0 +1,5 @@
+Pillow
+numpy
+matplotlib
+scikit-learn
+tensorflow==1.9.0

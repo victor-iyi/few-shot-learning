@@ -21,13 +21,14 @@ import os
 import pickle
 import zipfile
 import tarfile
+from typing import Union
 
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 
 from PIL import Image
-from sklearn.utils import shuffle
+import sklearn.utils as sk_utils
 
 # Custom utility module.
 import utils
@@ -81,7 +82,7 @@ class Visualize(object):
         plt.show()
 
     @staticmethod
-    def runs(directory: str, index: int=1, title: str='', **kwargs):
+    def runs(directory: str, index: int = 1, title: str = '', **kwargs):
         """Plot a single run in the omniglot "all_runs" data file.
 
         Args:
@@ -213,9 +214,9 @@ class Visualize(object):
         if not os.path.isdir(directory):
             raise FileNotFoundError(f'{directory} is not a valid directory!')
 
-        # Extract keyword arguments.
+        # Extract & set default keyword arguments.
         smooth = kwargs.setdefault('smooth', True)
-        cmap = kwargs.setdefault('cmap', 'gray')
+        kwargs.setdefault('cmap', 'gray')
 
         # Arguments used by matplotlib.
         kwargs.pop('smooth')
@@ -258,7 +259,6 @@ class Visualize(object):
 
 
 class Data(object):
-
     class Mode:
         """Data.Mode - Dataset pre-processing mode."""
         TRAIN = "TRAIN"
@@ -276,16 +276,16 @@ class Data(object):
         return self.__repr__()
 
     @staticmethod
-    def extract(path: str, extract_dir: str=data_dir, force: bool=False):
+    def extract(path: str, extract_dir: str = None, force: bool = False):
         """Extract a zip of tar file if not already extracted.
 
         Args:
             path (str): Path to a zipped or tarball.
-            extract_dir (str, optional): Defaults to data_dir. Path to be extracted to.
+            extract_dir (str, optional): Defaults to None. Path to be extracted to.
             force (bool, optional): Defaults to False. Force extraction even if already extracted.
 
         Raises:
-            FileNotFoundError: Coult not find `path`.
+            FileNotFoundError: Could not find `path`.
             ValueError: `path must be a zipped or a tarball.
 
         Returns:
@@ -296,9 +296,10 @@ class Data(object):
         if not os.path.isfile(path):
             raise FileNotFoundError(f'Could not find {path}')
 
-        # Retrive extracted directory.
-        extracted_dir = os.path.basename(path).split('.')[0]
-        extracted_dir = os.path.join(data_dir, extracted_dir)
+        # Retrieve extracted directory.
+        extract_dir = extract_dir or data_dir
+        name = os.path.basename(path).split('.')[0]
+        extracted_dir = os.path.join(extract_dir, name)
 
         # Don't extract if it's already been extracted.
         if os.path.isdir(extracted_dir) and not force:
@@ -310,12 +311,12 @@ class Data(object):
             os.makedirs(data_dir)
 
         if zipfile.is_zipfile(path):
-            print(f'Extracing {path}...')
+            print(f'Extracting {path}...')
             # Extract zipped file.
             with zipfile.ZipFile(path, mode="r") as z:
                 z.extractall(data_dir)
         elif tarfile.is_tarfile(path):
-            print(f'Extracing {path}...')
+            print(f'Extracting {path}...')
             # Unpack tarball.
             with tarfile.open(path, mode="r:gz") as t:
                 t.extractall(data_dir)
@@ -324,13 +325,13 @@ class Data(object):
             raise ValueError(f'{path} must a zipped or tarball file')
 
         # Display & return extracted directory.
-        print(f'Sucessfully extracted to {extracted_dir}')
+        print(f'Successfully extracted to {extracted_dir}')
         return extracted_dir
 
     @staticmethod
-    def load_image(path: str, dtype: np.dtype=np.float32,
-                   size: tuple=None, flatten: bool=False,
-                   grayscale: bool=False):
+    def load_image(path: str, dtype: np.dtype = np.float32,
+                   size: tuple = None, flatten: bool = False,
+                   grayscale: bool = False):
         """Load image pas a numpy array.
 
         Args:
@@ -370,7 +371,7 @@ class Data(object):
         except FileNotFoundError:
             raise FileNotFoundError(f'{path} was not found!')
         except Exception as e:
-            raise Exception(f'ERROR: {path}')
+            raise Exception(f'ERROR: {e}')
 
         # Convert Pillow object to NumPy array.
         image = np.array(image, dtype=dtype)
@@ -382,13 +383,13 @@ class Data(object):
         return image
 
     @staticmethod
-    def get_images(directory: str=None, paths: str=None,
-                   dtype: np.dtype=np.float32):
-        """Loadd all images from a directory or given image paths.
+    def get_images(directory: str = None, paths: Union([list, tuple]) = None,
+                   dtype: np.dtype = np.float32):
+        """Load all images from a directory or given image paths.
 
         Args:
             directory (str, optional): Defaults to None. Images directory.
-            paths (str, optional): Defaults to None. Given image paths.
+            paths (iterable, optional): Defaults to None. Given image paths.
             dtype (np.dtype, optional): Defaults to np.float32. Data type.
 
         Raises:
@@ -411,7 +412,7 @@ class Data(object):
         return images
 
     @staticmethod
-    def _listdir(root: str, tolist: bool=False):
+    def _listdir(root: str, tolist: bool = False):
         """List files and directories in a root directory without dot files.
 
         Args:
@@ -474,8 +475,8 @@ class Dataset(Data):
         >>>
         >>> # Training dataset.
         >>> dataset = Dataset(path=train_dir, mode=Dataset.Mode.TRAIN)
-        Extracing datasets/compressed/images_background.tar.gz...
-        Sucessfully extracted to datasets/extracted/images_background
+        Extracting datasets/compressed/images_background.tar.gz...
+       Successfully extracted to datasets/extracted/images_background
         Loading cached images & corresponding targets.
         >>>
         >>> # Print dataset object.
@@ -483,7 +484,7 @@ class Dataset(Data):
         dataset = Dataset(mode='TRAIN', cache=True, cache_dir='saved/images_background/train')
         >>>
         >>> # Get dataset shape.
-        >>> print(f'\nDataset: {dataset.shape}')
+        >>> print(f'Dataset: {dataset.shape}')
         Dataset: (964, 105, 105, 1)
         ```
 
@@ -511,7 +512,7 @@ class Dataset(Data):
             Create image pair for N-way one shot learning task.
 
         save(self, obj: any, name: str):
-            Save object for easy retrival.
+            Save object for easy retrial.
 
         load(self, name: str):
             Load saved/cached objects as npy or pickle format.
@@ -531,7 +532,7 @@ class Dataset(Data):
 
     """
 
-    def __init__(self, path: str=None, mode=None, **kwargs):
+    def __init__(self, path: str = None, mode=None, **kwargs):
         """Dataset.__init__
 
         Args:
@@ -541,12 +542,13 @@ class Dataset(Data):
         Raises:
             FileNotFoundError: `path` was not found.
         """
+        super().__init__(**kwargs)
 
         # Use argument or `omniglot.data_dir`.
         path = path or data_dir
         self._mode = mode or Dataset.Mode.TRAIN
 
-        # Retrive cache directory.
+        # Retrieve cache directory.
         cache_dir = os.path.basename(path).split('.')[0]
         cache_dir = os.path.join(save_dir, cache_dir)
 
@@ -556,10 +558,9 @@ class Dataset(Data):
         self._cache_dir = kwargs.get('cache_dir', cache_dir)
         self._verbose = kwargs.get('verbose', 1)
 
-        if self._cache:
-            if not os.path.isdir(self._cache_dir):
-                self._log(f'Creating {self._cache_dir}...\n')
-                os.makedirs(self._cache_dir)
+        if self._cache and not os.path.isdir(self._cache_dir):
+            self._log(f'Creating {self._cache_dir}...\n')
+            os.makedirs(self._cache_dir)
 
         if os.path.isdir(path):
             # Pre-process directory into pickle.
@@ -569,12 +570,9 @@ class Dataset(Data):
             self._data_dir = Dataset.extract(path, force=force)
             # Pre-process directory to be pickled.
             self._images, self._targets = self.create(self._data_dir)
-        elif path.endswith((".pkl", ".pickle")):
-            pass
         else:
             raise FileNotFoundError(f'{path} was not found.')
 
-        # self.n_examples, self.n_classes, self._width, self._height = self._images.shape
         self.length, self.n_classes, self._width, self._height = self._images.shape
         self._channel = 1
 
@@ -614,11 +612,11 @@ class Dataset(Data):
         return inst
 
     @classmethod
-    def from_xy(cls, X: np.ndarray, y: np.ndarray):
+    def from_xy(cls, x: np.ndarray, y: np.ndarray):
         """Instantiate from images & targets.
 
         Args:
-            X (np.ndarray): List of image pairs.
+            x (np.ndarray): List of image pairs.
             y (np.ndarray): Corresponding target labels.
 
         Returns:
@@ -633,7 +631,7 @@ class Dataset(Data):
 
         return inst
 
-    def create(self, path: str, dtype: np.dtype=np.float32):
+    def create(self, path: str, dtype: np.dtype = np.float32):
         """Create image pairs & respective target labels.
 
         Args:
@@ -643,9 +641,10 @@ class Dataset(Data):
         Returns:
             tuple: images pairs & label.
         """
+        x_label, y_label = "images", "targets"
 
-        X = self.load("images")
-        y = self.load("targets")
+        X = self.load(x_label)
+        y = self.load(y_label)
 
         # Return cached images & labels.
         if X is not False and y is not False:
@@ -656,25 +655,41 @@ class Dataset(Data):
         # Process "images" & "targets".
         self._log('Loading images & targets')
 
+        # Keep track of anything Exception.
+        X, y = self._create(path)
+
+        X = np.asarray(X, dtype=dtype)
+        y = np.asarray(y, dtype=dtype)
+
+        if self._cache:
+            # Save images & targets.
+            self.save(X, x_label)
+            self.save(y, y_label)
+
+        self._log(f'\nImages = {X.shape}\tTargets = {y.shape}\n')
+
+        return X, y
+
+    def _create(self, path: str):
+
         # Images, labels & class indices.
-        X, y, idx = [], [], 0
+        x, y, idx, status = [], [], 0, True
 
         # Table header.
-        print(f'ID  Alphabet {"Status":>42}')
+        self._log(f'ID  Alphabet {"Status":>42}')
 
-        # Keep track of anything Exception.
-        status = True
         for i, (root, folder, files) in enumerate(os.walk(path)):
             # Filter files that aren't images.
             files = self._filter_files(files)
 
             if len(files) > 1:
+                # noinspection PyBroadException
                 try:
                     # Get ||image file names||.
                     img_paths = [os.path.join(root, f) for f in files]
 
                     # Images & class index.
-                    X.append(self.get_images(paths=img_paths))
+                    x.append(self.get_images(paths=img_paths))
                     y.append(idx)
 
                     # Everything went okay.
@@ -689,27 +704,21 @@ class Dataset(Data):
                     continue
 
                 # Get Alphabet's name.
-                if self._verbose:
-                    name = os.path.basename(root).replace('_', ' ')
-                    print(f'{idx:02d}. {name:<45} {"DONE" if status else "ERROR"}')
+                log_msg = '{:02d}. {:<45} {}'.format(idx,
+                                                     os.path.basename(root).replace('_', ' '),
+                                                     "DONE" if status else "ERROR")
+                self._log(log_msg)
 
                 # Increment class index.
                 idx += 1
 
         # Images & targets.
-        X, y = np.stack(X), np.vstack(y)
+        x, y = np.stack(x), np.vstack(y)
 
-        if self._cache:
-            # Save images & targets.
-            self.save(X, 'images')
-            self.save(y, 'targets')
-
-        self._log(f'\nImages = {X.shape}\tTargets = {y.shape}\n')
-
-        return X, y
+        return x, y
 
     @utils.to_tensor
-    def get_batch(self, batch_size: int=128):
+    def get_batch(self, batch_size: int = 128):
         """Get a randomly sampled mini-batch of image pairs and corresponding targets.
 
         Args:
@@ -769,46 +778,46 @@ class Dataset(Data):
     # Alias for `Dataset.get_batch`.
     get = get_batch
 
-    def one_shot_task(self, N: int):
+    def one_shot_task(self, n: int):
         """Create image pair for N-way one shot learning task.
 
         Args:
-            N (int): Number of pairs to generate.
+            n (int): Number of pairs to generate.
         """
 
         # Save image dimension
         img_dim = (self._width, self._height, self._channel)
 
         # Pick random index (from Alphabets).
-        indicies = np.random.randint(0, self.n_classes, size=(N,))
+        indices = np.random.randint(0, self.n_classes, size=(n,))
 
         # Pick random character.
-        categories = np.random.randint(self.length, size=(N,))
+        categories = np.random.randint(self.length, size=(n,))
 
         true_cat = categories[0]
         ex1, ex2 = np.random.choice(self.n_classes, size=(2,))
 
         # 1st image in pair.
-        first = np.array([self._images[true_cat, ex1, :, :, ]] * N)
-        first = first.reshape(N, *img_dim)
+        first = np.array([self._images[true_cat, ex1, :, :, ]] * n)
+        first = first.reshape(n, *img_dim)
 
         # 2nd image in pair (support set).
-        second = self._images[categories, indicies, :, :]
+        second = self._images[categories, indices, :, :]
         second[0, :, :] = self._images[true_cat, ex2]
-        second = second.reshape(N, *img_dim)
+        second = second.reshape(n, *img_dim)
 
         # Target
-        targets = np.zeros(shape=(N,), dtype=np.float32)
+        targets = np.zeros(shape=(n,), dtype=np.float32)
         targets[0] = 1
 
         # Shuffle data.
-        targets, first, second = shuffle(targets, first, second)
+        targets, first, second = sk_utils.shuffle(targets, first, second)
 
         pairs = np.asarray([first, second])
 
         return pairs, targets
 
-    def next_batch(self, batch_size: int=128):
+    def next_batch(self, batch_size: int = 128):
         """Batch generator. Gets the next image pairs and corresponding target.
 
             Args:
@@ -824,7 +833,7 @@ class Dataset(Data):
             yield pairs, target
 
     def save(self, obj: any, name: str):
-        """Save object for easy retrival.
+        """Save object for easy retrial.
 
         Args:
             obj (any): Object to be cached.
@@ -846,7 +855,7 @@ class Dataset(Data):
         else:
             path = f'{path}.pkl'
             with open(path, mode="wb") as f:
-                pickle.dump(obj, file)
+                pickle.dump(obj, f)
 
         self._log(f'Cached "{name}" to "{path}"')
 
