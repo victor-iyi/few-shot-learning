@@ -575,7 +575,7 @@ class Dataset(Data):
             raise FileNotFoundError(f'{path} was not found.')
 
         # self.n_examples, self.n_classes, self._width, self._height = self._images.shape
-        self.n_classes, self.n_examples, self._width, self._height = self._images.shape
+        self.length, self.n_classes, self._width, self._height = self._images.shape
         self._channel = 1
 
     def __repr__(self):
@@ -586,7 +586,7 @@ class Dataset(Data):
         return NotImplemented
 
     def __len__(self):
-        return self.len(self._images)
+        return self.length
 
     @classmethod
     def from_cache(cls, path: str):
@@ -729,7 +729,7 @@ class Dataset(Data):
         half_batch = batch_size // 2
 
         # Randomly sample several classes (alphabet) to use in the batch.
-        categories = np.random.choice(self.n_classes, size=(batch_size,))
+        categories = np.random.choice(self.length, size=(batch_size,))
 
         # Initialize 2 empty arrays for the input image batch.
         # pairs = np.zeros(shape=(2, batch_size, *img_dim))
@@ -747,11 +747,11 @@ class Dataset(Data):
 
             # For 1st image pair:
             # Sample a character ID from characters in this category.
-            idx1 = rand(low=0, high=self.n_examples)
+            idx1 = rand(low=0, high=self.n_classes)
             first[i, :, :, :] = self._images[cat1, idx1].reshape(img_dim)
 
             # For 2nd image pair:
-            idx2 = rand(low=0, high=self.n_examples)
+            idx2 = rand(low=0, high=self.n_classes)
 
             # Pick images of same class for 1st half, different for 2nd half.
             if i >= half_batch:
@@ -759,7 +759,7 @@ class Dataset(Data):
             else:
                 # Add a random number to the category modulo n classes to ensure
                 # 2nd image has different category.
-                cat2 = (cat1 + rand(1, self.n_classes)) % self.n_classes
+                cat2 = (cat1 + rand(1, self.n_classes)) % self.length
             second[i, :, :, :] = self._images[cat2, idx2].reshape(img_dim)
 
         pairs = [first, second]
@@ -776,22 +776,26 @@ class Dataset(Data):
             N (int): Number of pairs to generate.
         """
 
-        indicies = np.random.randint(0, self.n_examples, size=(N,))
+        # Save image dimension
+        img_dim = (self._width, self._height, self._channel)
 
-        # Pick random letters.
-        categories = np.random.randint(self.n_classes, size=(N,))
+        # Pick random index (from Alphabets).
+        indicies = np.random.randint(0, self.n_classes, size=(N,))
+
+        # Pick random character.
+        categories = np.random.randint(self.length, size=(N,))
 
         true_cat = categories[0]
-        ex1, ex2 = np.random.choice(self.n_examples, size=(2,))
+        ex1, ex2 = np.random.choice(self.n_classes, size=(2,))
 
         # 1st image in pair.
         first = np.array([self._images[true_cat, ex1, :, :, ]] * N)
-        first = first.reshape(N, self._width, self._height, self._channel)
+        first = first.reshape(N, *img_dim)
 
         # 2nd image in pair (support set).
         second = self._images[categories, indicies, :, :]
         second[0, :, :] = self._images[true_cat, ex2]
-        second = second.reshape(N, self._width, self._height, self._channel)
+        second = second.reshape(N, *img_dim)
 
         # Target
         targets = np.zeros(shape=(N,), dtype=np.float32)
@@ -800,7 +804,7 @@ class Dataset(Data):
         # Shuffle data.
         targets, first, second = shuffle(targets, first, second)
 
-        pairs = [first, second]
+        pairs = np.asarray([first, second])
 
         return pairs, targets
 
