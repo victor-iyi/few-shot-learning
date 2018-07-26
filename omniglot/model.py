@@ -26,10 +26,11 @@ from tensorflow import keras
 class SiameseNetwork(keras.Model):
     """Siamese Neural network for few shot learning."""
 
+    # noinspection SpellCheckingInspection
     def __init__(self, num_classes: int = 1, **kwargs):
         """Implementation of *Siamese Network* with parameter specifications
-        as proposed in [this](http://www.cs.cmu.edu/~rsalakhu/papers/oneshot1.pdf)
-        by Gregory Koch, Richard Zemel and Ruslan Salakhutdinov.
+                as proposed in [this](http://www.cs.cmu.edu/~rsalakhu/papers/oneshot1.pdf)
+                by Gregory Koch, Richard Zemel and Ruslan Salakhutdinov.
 
         Args:
             num_classes (int, optional): Defaults to 1. Number of output classes
@@ -38,7 +39,6 @@ class SiameseNetwork(keras.Model):
         Keyword Args:
             input_shape (tuple, optional): Defaults to (105, 105, 1). Input shape
                 for a single image. Shape in the form: `(width, height, channel)`.
-
         """
 
         super(SiameseNetwork, self).__init__(name='SiameseNetwork')
@@ -112,6 +112,8 @@ class SiameseNetwork(keras.Model):
 
         Args:
             inputs: A tensor or list of tensors.
+
+        Keyword Args:
             training: Boolean or boolean scalar tensor, indicating whether to run
             the `Network` in training mode or inference mode.
             mask: A mask or list of masks. A mask can be
@@ -121,8 +123,6 @@ class SiameseNetwork(keras.Model):
             A tensor if there is a single output, or
             a list of tensors if there are more than one outputs.
         """
-
-        training = kwargs.get('training', True)
 
         # Sister networks.
         first = self.__encoder(inputs[0])
@@ -170,9 +170,9 @@ class SiameseNetwork(keras.Model):
         """
 
         # Saving model isn't implemented yet for subclassed models in Keras.
-        raise NotImplementedError(
-            "`keras.save_model` hasn't been implemented for model subclassing."
-        )
+        # raise NotImplementedError(
+        #     "`keras.save_model` hasn't been implemented for model subclassing."
+        # )
 
         # Saved model filepath.
         filepath = f'{ self.model_dir}/model-{"epoch:03d"}.h5'
@@ -195,6 +195,7 @@ class SiameseNetwork(keras.Model):
         keras_model = self
 
         # Convert keras model to `tf.estimator`.
+        # noinspection PyMethodFirstArgAssignment
         self = keras.estimator.model_to_estimator(keras_model=keras_model,
                                                   model_dir='saved/models/estimator')
         # Current object is now a tf.estimator object.
@@ -217,7 +218,7 @@ class SiameseNetwork(keras.Model):
         """
 
         # Triplet loss for a single image.
-        loss = tf.maximum(y_ture - y_pred + alpha, 0)
+        loss = tf.maximum(y_true - y_pred + alpha, 0)
 
         # Sum over all images.
         return tf.reduce_sum(loss, name="Triplet_Loss")
@@ -227,11 +228,8 @@ class SiameseNetwork(keras.Model):
         """Binary crossentropy between an output tensor and a target tensor.
 
         Args:
-            target: A tensor with the same shape as `output`.
-            output: A tensor.
-            from_logits: Whether `output` is expected to be a logits tensor.
-                By default, we consider that `output`
-                encodes a probability distribution.
+            y_true: A tensor with the same shape as `output`.
+            y_pred: A tensor.
 
         Returns:
             tf.tensor: Binary crossentropy loss.
@@ -252,18 +250,17 @@ class SiameseNetwork(keras.Model):
         L(x1, x2, t) = t⋅log(p(x1 ∘ x2)) + (1−t)⋅log(1 − p(x1 ∘ x2)) + λ⋅||w||2
 
         Args:
-            y_pred (tf.Tensor): Predicted distance between two inputs.
-            y_true (tf.Tensor): Ground truth or target, t (where, t = [1 or 0]).
+            y_pred (any): Predicted distance between two inputs.
+            y_true (any): Ground truth or target, t (where, t = [1 or 0]).
 
             alpha (float, optional): Defaults to 0.2. Slight margin
                 added to prediction to avoid 0-learning.
 
         Returns:
-            tf.Tensor: Constractive loss function.
+            tf.Tensor: Constrictive loss function.
         """
 
-        loss = y_true * tf.log(y_pred) + (1 - y_true) * \
-            tf.log(1 - y_pred) + alpha
+        loss = y_true * tf.log(y_pred) + (1 - y_true) * tf.log(1 - y_pred) + alpha
 
         return tf.reduce_mean(loss, name="contrastive_loss")
 

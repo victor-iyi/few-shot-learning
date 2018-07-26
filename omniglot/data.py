@@ -91,7 +91,7 @@ class Visualize(object):
             title (str, optional): Defaults to ''. Title of the plot.
 
         Keyword Args:
-            smooth (bool, optional): Defaults to True. Smoothen images.
+            smooth (bool, optional): Defaults to True. Smooth images.
 
             See `matplotlib.pyplot.imshow` for more options.
                 cmap (pyplot.cmap, optional): Defaults to 'gray'. See `plt.imshow`.
@@ -104,7 +104,7 @@ class Visualize(object):
         # Update keyword arguments by matplotlib.
         kwargs.pop("smooth")
         kwargs.update({
-            # Change interpolation to smoothen image.
+            # Change interpolation to smooth images.
             "interpolation": 'spline16' if smooth else 'nearest'
         })
 
