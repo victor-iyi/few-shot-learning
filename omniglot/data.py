@@ -33,8 +33,7 @@ import sklearn.utils as sk_utils
 import utils
 
 # Base data & save directory.
-base_dir = 'datasets/'
-save_dir = 'saved/'
+base_dir, save_dir = 'datasets/', 'saved/'
 
 # Data sub directories.
 data_dir = os.path.join(base_dir, 'extracted')
@@ -704,7 +703,8 @@ class Dataset(Data):
 
                 # Get Alphabet's name.
                 log_msg = '{:02d}. {:<45} {}'.format(idx,
-                                                     os.path.basename(root).replace('_', ' '),
+                                                     os.path.basename(
+                                                         root).replace('_', ' '),
                                                      "DONE" if status else "ERROR")
                 self._log(log_msg)
 
