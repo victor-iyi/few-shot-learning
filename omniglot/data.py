@@ -21,7 +21,6 @@ import os
 import pickle
 import zipfile
 import tarfile
-from typing import Union
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -383,7 +382,7 @@ class Data(object):
         return image
 
     @staticmethod
-    def get_images(directory: str = None, paths: Union([list, tuple]) = None,
+    def get_images(directory: str = None, paths: list = None,
                    dtype: np.dtype = np.float32):
         """Load all images from a directory or given image paths.
 
