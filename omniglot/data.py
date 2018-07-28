@@ -47,13 +47,20 @@ class Visualize(object):
     """Helper class for visualizing images in omniglot dataset."""
 
     @staticmethod
-    def image(image: np.ndarray, title: str, **kwargs):
+    def image(image: np.ndarray=None, filename: str=None, title: str, **kwargs):
         """Visualize a single image.
 
         Args:
             image (np.ndarray): Image as a numpy array
             title (str): Title of the plot.
         """
+
+        if image is None and filename is not None:
+            # Read image from filename.
+            image = Dataset.load_image(filename)
+
+        # Make sure `image` is a np.ndarray.
+        assert issubclass(image, np.ndarray), 'Image should be a numpy array'
 
         # Extract default keyword arguments.
         kwargs.setdefault('cmap', 'gray')
@@ -520,7 +527,6 @@ class Dataset(Data):
 
         _log(self, *args, **kwargs):
             Custom logger method for debug purposes.
-
 
     Attributes:
         cache_dir (str): Directory where files are saved.
