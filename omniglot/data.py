@@ -47,7 +47,7 @@ class Visualize(object):
     """Helper class for visualizing images in omniglot dataset."""
 
     @staticmethod
-    def image(image: np.ndarray=None, filename: str=None, title: str, **kwargs):
+    def image(image: np.ndarray=None, filename: str=None, title: str='One-Shot Task', **kwargs):
         """Visualize a single image.
 
         Args:
