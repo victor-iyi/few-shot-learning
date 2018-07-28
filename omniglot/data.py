@@ -600,6 +600,44 @@ class Dataset(Data):
 
         return pairs, targets
 
+    def test_one_shot_task(self, model: any, n: int, k: int):
+        """Test average N way oneshot learning accuracy of a
+        SiameseNetwork over k one-shot tasks.
+
+        Args:
+            model (tfk.keras.Model): Trained keras model.
+            n (int): N-way one-shot task.
+            k (int): Number of one-shot task to test on.
+
+        Returns:
+            float: Accuracy fraction in range $0. \le x \le 1.$.
+        """
+
+        self._log(f'Evaluating model on {k} random {n}'
+                  ' way one-shot learning tasks...')
+
+        # Keep track number of correct predictions.
+        n_correct = 0
+
+        for i in range(k):
+            # Get random one-shot task input pairs & matching targets.
+            pairs, targets = self.one_shot_task(n)
+
+            # Make predictions.
+            probs = model.predict(pairs)
+
+            # Increment correct prediction if the prediction is correct.
+            if np.argmax(probs) == np.argmax(targets):
+                n_correct += 1
+
+        # Calculate correct percentage.
+        pct = n_correct / k
+
+        self._log(f'Got an average of {pct:.2%} '
+                  f'{n} way one-shot learning accuracy')
+
+        return pct
+
     def next_batch(self, batch_size: int = 128):
         """Batch generator. Gets the next image pairs and corresponding target.
 
