@@ -19,7 +19,9 @@
      Copyright (c) 2018. Victor I. Afolabi. All rights reserved.
 """
 
-from omniglot.data import Dataset, Visualize
+from omniglot.data import Dataset
+from omniglot.visualize import Visualize
+
 from omniglot.data import n_runs, compressed_dir, data_dir, base_dir
 
 from omniglot.model import SiameseNetwork
@@ -30,6 +32,9 @@ __all__ = [
     'base_dir', 'data_dir',
     'compressed_dir', 'n_runs',
     'Dataset',
+
+    # Visualization.
+    'Visualize',
 
     # Model.
     'SiameseNetwork',

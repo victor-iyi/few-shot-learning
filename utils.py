@@ -1,5 +1,8 @@
 """Utility module for few-shot learning.
 
+   @description
+     For converting values to Tensor & pre-paring dataset for `tf.estimator` API.
+
    @author
      Victor I. Afolabi
      Artificial Intelligence & Software Engineer.
