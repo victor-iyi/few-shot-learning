@@ -219,7 +219,7 @@ class SiameseNetwork(keras.Model):
         loss = tf.maximum(y_true - y_pred + alpha, 0)
 
         # Sum over all images.
-        return tf.reduce_sum(loss, name="Triplet_Loss")
+        return tf.reduce_sum(loss, axis=1, name="Triplet_Loss")
 
     @staticmethod
     def binary_crossentropy(y_true, y_pred):
@@ -258,7 +258,7 @@ class SiameseNetwork(keras.Model):
             tf.Tensor: Constrictive loss function.
         """
 
-        loss = y_true * tf.log(y_pred) + (1 - y_true) * \
+        loss = y_true * tf.log(y_true) + (1 - y_pred) * \
             tf.log(1 - y_pred) + alpha
 
         return tf.reduce_mean(loss, name="contrastive_loss")
@@ -294,6 +294,9 @@ class SiameseNetwork(keras.Model):
         # Flatten & fully connected layers.
         x = self.flatten(x)
         x = self.dense(x)
+
+        # # Prediction.
+        # x = self.prediction(x)
 
         return x
 
