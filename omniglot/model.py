@@ -274,7 +274,7 @@ class SiameseNetwork(keras.Model):
             tf.Tensor: Absolute squared difference between two inputs.
         """
 
-        return tf.abs(tf.squared_difference(x[0], x[1]))
+        return tf.square(tf.abs(x[0] - x[1]))
 
     def __encoder(self, x):
         """Compute forward pass. Encoder part of the network.
