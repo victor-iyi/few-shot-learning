@@ -257,3 +257,7 @@ class Visualize(object):
         # Set plot's title & show figure.
         plt.suptitle(title)
         plt.show()
+
+    @staticmethod
+    def one_shot_task():
+        pass

@@ -453,6 +453,7 @@ class Dataset(Data):
         return X, y
 
     def _create(self, path: str):
+        """Helper for creating dataset from files."""
 
         # Images, labels & class indices.
         x, y, idx, status = [], [], 0, True
@@ -486,11 +487,11 @@ class Dataset(Data):
                     continue
 
                 # Get Alphabet's name.
-                log_msg = '{:02d}. {:<45} {}'.format(idx,
-                                                     os.path.basename(
-                                                         root).replace('_', ' '),
-                                                     "DONE" if status else "ERROR")
-                self._log(log_msg)
+                _name = os.path.basename(root).replace('_', ' ')
+                _status = "DONE" if status else "ERROR"
+                self._log('{idx:02d}. {_name:<45} {_status}')
+
+                # del _name, _status  # Clear extra memory.
 
                 # Increment class index.
                 idx += 1
@@ -566,6 +567,9 @@ class Dataset(Data):
 
         Args:
             n (int): Number of pairs to generate.
+
+        Returns:
+            tuple: Image pairs (each 3D-array) and target (1-D).
         """
 
         # Save image dimension
@@ -589,13 +593,14 @@ class Dataset(Data):
         second[0, :, :] = self._images[true_cat, ex2]
         second = second.reshape(n, *img_dim)
 
-        # Target
+        # Target.
         targets = np.zeros(shape=(n,), dtype=np.float32)
         targets[0] = 1
 
         # Shuffle data.
         targets, first, second = sk_utils.shuffle(targets, first, second)
 
+        # Create image pairs as a numpy array.
         pairs = np.asarray([first, second])
 
         return pairs, targets
@@ -627,8 +632,7 @@ class Dataset(Data):
             probs = model.predict(pairs)
 
             # Increment correct prediction if the prediction is correct.
-            if np.argmax(probs) == np.argmax(targets):
-                n_correct += 1
+            n_correct += 1 if np.argmax(probs) == np.argmax(targets) else 0
 
         # Calculate correct percentage.
         pct = n_correct / k
@@ -641,12 +645,12 @@ class Dataset(Data):
     def next_batch(self, batch_size: int = 128):
         """Batch generator. Gets the next image pairs and corresponding target.
 
-            Args:
-                batch_size (int, optional): Defaults to 128. Mini batch size.
+        Args:
+            batch_size (int, optional): Defaults to 128. Mini batch size.
 
-            Yields:
-                tuple (pairs, target) -- Image pairs & target (0 or 1)
-                    target=1 if pairs are the same letter & 0 otherwise.
+        Yields:
+            tuple (pairs, target) -- Image pairs & target (0 or 1)
+                target=1 if pairs are the same letter & 0 otherwise.
         """
 
         while True:
