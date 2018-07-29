@@ -35,7 +35,7 @@ LICENSE        README.md      datasets       images         omniglot       one-s
 Or simply [download this repository](https://github.com/victor-iyiola/few-shot-learning/archive/master.zip), and change your working directory to the downloaded project.
 
 ```sh
-$ cd path/to/download
+$ cd path/to/few-shot-learning
 $ ls
 LICENSE        README.md      datasets       images         omniglot       one-shot.ipynb          utils.py
 ```
@@ -46,6 +46,7 @@ LICENSE        README.md      datasets       images         omniglot       one-s
 
 This project was developed with [Python v3.6.5](https://python.org/downloads/). However any higher version of Python works fine.
 
+- [Jupyter](https://jupyter.org) >= v4.4.0
 - [NumPy](https://numpy.io) >= v1.14.3
 - [Sci-kit learn](https://github.com/scikit-learn/scikit-learn)  >= v0.19.1
 - [Keras](https://keras.io) >= v2.2.0
@@ -53,7 +54,15 @@ This project was developed with [Python v3.6.5](https://python.org/downloads/). 
 
 ```sh
 $ pip3 install --upgrade -r requirements.txt
-something
+$ jupyter notebook
+[I 08:36:52.271 LabApp] The Jupyter Notebook is running at:
+[I 08:36:52.271 LabApp] http://localhost:8888/?token=cb246f438ca40a1a319d12c877d2e825c923fc0525c9d136
+[I 08:36:52.271 LabApp] Use Control-C to stop this server and shut down all kernels (twice to skip confirmation).
+[C 08:36:52.273 LabApp]
+
+    Copy/paste this URL into your browser when you connect for the first time,
+    to login with a token:
+        http://localhost:8888/?token=cb246f438ca40a1a319d12c877d2e825c923fc0525c9d136
 ```
 
 ## Architecture
