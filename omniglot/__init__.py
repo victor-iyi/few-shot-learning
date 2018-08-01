@@ -18,6 +18,8 @@
      MIT License
      Copyright (c) 2018. Victor I. Afolabi. All rights reserved.
 """
+# Supress TensorFlow import warnings.
+from omniglot import supress
 
 from omniglot.data import Dataset
 from omniglot.visualize import Visualize

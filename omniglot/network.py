@@ -17,6 +17,8 @@
      MIT License
      Copyright (c) 2018. Victor I. Afolabi. All rights reserved.
 """
+# Supress TensorFlow import warnings.
+import supress
 
 import tensorflow as tf
 
@@ -30,6 +32,7 @@ class Network(object):
         # Extract Keyword arguments.
         self.num_classes = num_classes
         self._input_shape = kwargs.get('input_shape', (500, 500, 1))
+        self._verbose = kwargs.get('verbose', 1)
 
         # Input pair inputs.
         pair_1st = keras.Input(shape=self._input_shape)
@@ -79,8 +82,6 @@ class Network(object):
 
         # Model.
         self._model = keras.Model(inputs=[pair_1st, pair_2nd], outputs=outputs)
-
-    def train(self, *args, **kwargs):
         # Extract keyword arguments.
         lr = kwargs.get('lr', 1e-3)
 
@@ -90,3 +91,18 @@ class Network(object):
         # TODO: Get layerwise learning rates and momentum annealing scheme described in paperworking.
         self._model.compile(loss="binary_crossentropy",
                             optimizer=optimizer)
+
+        # Parameter count.
+        n_params = self._model.count_params()
+        self._log(f'Mode has {n_params:,} parameters.')
+
+    def train(self, *args, **kwargs):
+        pass
+
+    def _log(self, *args, **kwargs):
+        if self._verbose:
+            print(*args, **kwargs)
+
+
+if __name__ == '__main__':
+    net = Network()
