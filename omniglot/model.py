@@ -58,7 +58,7 @@ class SiameseNetwork(keras.Model):
             tf.gfile.MakeDirs(self.model_dir)
 
         # Path to save model's weights.
-        self.model_weights = f'{self.model_dir}/weights.h5'
+        self.model_weights = f'{self.model_dir}/model-weights.h5'
 
         # # Input layer.
         # self.input_layer = keras.layers.InputLayer(input_shape=self.in_shape,

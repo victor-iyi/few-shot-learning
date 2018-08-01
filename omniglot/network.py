@@ -43,7 +43,7 @@ class Network(object):
             tf.gfile.MakeDirs(self._model_dir)
 
         # Path to save model's weights.
-        self._model_weights = f'{self._model_dir}/weights.h5'
+        self._model_weights = f'{self._model_dir}/network-weights.h5'
 
         # Input pair inputs.
         pair_1st = keras.Input(shape=self._input_shape)
