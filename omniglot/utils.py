@@ -1,4 +1,4 @@
-"""Utility module for few-shot learning.
+"""Utility module for preparing input data.
 
    @description
      For converting values to Tensor & pre-paring dataset for `tf.estimator` API.

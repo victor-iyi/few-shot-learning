@@ -91,7 +91,7 @@ class Network(object):
 
         # TODO: Get layerwise learning rates and momentum annealing scheme described in paperworking.
         self._model.compile(loss="binary_crossentropy",
-                            optimizer=optimizer)
+                            optimizer=optimizer, metrics=['accuracy'])
 
         # Log summary if verbose is 'on'.
         self._log(callback=self._model.summary)
