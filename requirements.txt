@@ -1,5 +1,5 @@
-Pillow
-numpy
-matplotlib
-scikit-learn
-tensorflow==1.9.0
+Pillow>=5.0.0
+numpy>=1.14.3
+matplotlib>=2.2.2
+scikit-learn>=0.19.1
+tensorflow>=1.9.0
