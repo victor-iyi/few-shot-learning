@@ -11,6 +11,7 @@
 
    @project
      File: model.py
+     Package: omniglot
      Created on 13 July, 2018 @ 9:10 PM.
 
    @license

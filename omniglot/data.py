@@ -11,6 +11,7 @@
 
    @project
      File: data.py
+     Package: omniglot
      Created on 18 May, 2018 @ 5:26 PM.
 
    @license

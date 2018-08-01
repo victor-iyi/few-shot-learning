@@ -10,6 +10,7 @@
      GitHub: https://github.com/victor-iyiola/
 
    @project
+     Package: omniglot
      File: visualize.py
      Created on 28 July, 2018 @ 11:37 PM.
 

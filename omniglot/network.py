@@ -11,7 +11,8 @@
 
    @project
      File: network.py
-     Created on 1 August, 2018 @ 10:47 AM.
+     Package: omniglot
+     Created on 1st August, 2018 @ 10:47 AM.
 
    @license
      MIT License

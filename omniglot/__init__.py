@@ -12,6 +12,7 @@
 
    @project
      File: __init__.py
+     Package: omniglot
      Created on 18 May, 2018 @ 5:22 PM.
 
    @license

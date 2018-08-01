@@ -10,9 +10,9 @@
      GitHub: https://github.com/victor-iyiola/
 
    @project
-     Package: omniglot
      File: supress.py
-     Created on 1 August, 2018 @ 10:47 AM.
+     Package: omniglot
+     Created on 1st August, 2018 @ 12:14 AM.
 
    @license
      MIT License
