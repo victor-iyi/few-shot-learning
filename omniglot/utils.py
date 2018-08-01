@@ -36,7 +36,7 @@ class Generator(tf.keras.utils.Sequence):
     """Sequence generator wrapper around the `omniglot.Dataset` class."""
 
     def __init__(self, dataset: Dataset, batch_size: int=128):
-        """omniglot.utils.Generator.__init__
+        """omniglot.utils.Generator.__init__ now _that_
 
         Args:
             dataset (omniglot.Dataset): A dataset instance.
