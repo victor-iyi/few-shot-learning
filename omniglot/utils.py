@@ -11,6 +11,7 @@
 
    @project
      File: utils.py
+     Package: omniglot
      Created on 21 Jul, 2018 @ 5:26 AM.
 
    @license
@@ -21,11 +22,60 @@
 import numpy as np
 import tensorflow as tf
 
+from data import Dataset
+
 
 __all__ = [
+    'Generator',
     'np_input_fn', 'tf_input_fn',
     'to_tensor', 'make_dataset'
 ]
+
+
+class Generator(tf.keras.utils.Sequence):
+    """Sequence generator wrapper around the `omniglot.Dataset` class."""
+
+    def __init__(self, dataset: Dataset, batch_size: int=128):
+        """omniglot.utils.Generator.__init__
+
+        Args:
+            dataset (omniglot.Dataset): A dataset instance.
+            batch_size (int, optional): Defaults to 128. Mini-batch size.
+        """
+
+        self._dataset = dataset
+        self.batch_size = batch_size
+
+    def __len__(self):
+        """Length of Generator batch"""
+        return int(np.ceil(len(self._dataset) / float(self.batch_size)))
+
+    def __getitem__(self, idx):
+        return self._dataset.get(batch_size=self.batch_size)
+
+    @classmethod
+    def fromPath(cls, batch_size=128, *args, **kwargs):
+        """Create generator from a given path.
+
+        Args:
+            batch_size (int, optional): Defaults to 128. Mini-batch_size.
+            See `omniglot.Dataset`.
+
+        Keyword Args:
+            See `omniglot.Dataset` for options.
+
+        Returns:
+            `omniglot.utils.Generator`: A Generator instance.
+        """
+
+        # Create a dataset object.
+        dataset = Dataset(*args, **kwargs)
+
+        # Instantiate a Generator.
+        inst = cls(dataset, batch_size)
+
+        # Return generator instance.
+        return inst
 
 
 def to_tensor(func):

@@ -41,4 +41,6 @@ __all__ = [
 
     # Model.
     'SiameseNetwork',
+
+    'utils',
 ]

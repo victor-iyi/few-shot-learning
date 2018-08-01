@@ -29,7 +29,7 @@ from PIL import Image
 import sklearn.utils as sk_utils
 
 # Custom utility module.
-# import utils
+import utils
 
 # Base data & save directory.
 base_dir, save_dir = 'datasets/', 'saved/'
@@ -502,7 +502,7 @@ class Dataset(Data):
 
         return x, y
 
-    # @utils.to_tensor
+    @utils.to_tensor
     def get_batch(self, batch_size: int = 128):
         """Get a randomly sampled mini-batch of image pairs and corresponding targets.
 
