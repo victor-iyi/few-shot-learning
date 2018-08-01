@@ -20,6 +20,7 @@
 """
 # Supress TensorFlow import warnings.
 import supress
+from data import Dataset
 
 import tensorflow as tf
 
@@ -32,7 +33,7 @@ class Network(object):
     def __init__(self, num_classes=1, **kwargs):
         # Extract Keyword arguments.
         self.num_classes = num_classes
-        self._input_shape = kwargs.get('input_shape', (500, 500, 1))
+        self._input_shape = kwargs.get('input_shape', (105, 105, 1))
         self._verbose = kwargs.get('verbose', 1)
 
         # Input pair inputs.
@@ -93,17 +94,61 @@ class Network(object):
         self._model.compile(loss="binary_crossentropy",
                             optimizer=optimizer)
 
-        # Parameter count.
-        n_params = self._model.count_params()
-        self._log(f'Mode has {n_params:,} parameters.')
+        # Log summary if verbose is 'on'.
+        self._log(callback=self._model.summary)
 
-    def train(self, *args, **kwargs):
-        pass
+        # Parameter count.
+        # n_params = self._model.count_params()
+        # self._log(f'Network has {n_params:,} parameters.')
+
+    def train(self, train_data: Dataset, valid_data: Dataset=None, **kwargs):
+
+        # Extract keyword arguments.
+        epochs = kwargs.setdefault('epochs', 1)
+        batch_size = kwargs.setdefault('batch_size', 64)
+        steps_per_epoch = kwargs.setdefault('steps_per_epoch', 128)
+
+        # Get batch generators.
+        train_gen = train_data.next_batch(batch_size=batch_size)
+
+        # Fit the network.
+        if valid_data is None:
+            # without validation set.
+            self._model.fit_generator(train_gen, **kwargs)
+        else:
+            valid_gen = valid_data.next_batch(batch_size=batch_size)
+            # with validation set.
+            self._model.fit_generator(train_gen, validation_data=valid_gen,
+                                      **kwargs)
 
     def _log(self, *args, **kwargs):
-        if self._verbose:
-            print(*args, **kwargs)
+        # No logging if verbose is not 'on'.
+        if self._verbose is not 1:
+            return
+
+        # Handle for callbacks.
+        callback = kwargs.setdefault('callback', None)
+        params = kwargs.setdefault('params', None)
+
+        # Call any callbacks if it is callable.
+        if callback and callable(callback):
+            # Callback with no params or with params.
+            callback() if params is None else callback(params)
+
+        # Remove callback & params keys.
+        kwargs.pop('callback')
+        kwargs.pop('params')
+
+        # Log other args & kwargs.
+        print(*args, **kwargs)
 
 
 if __name__ == '__main__':
+    # Instantiate Siamese Network.
     net = Network()
+
+    # Create some training data.
+    train = Dataset(mode=Dataset.Mode.TRAIN)
+
+    # Train the model.
+    net.train(train_data=train)
