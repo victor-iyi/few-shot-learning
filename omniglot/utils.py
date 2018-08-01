@@ -21,8 +21,7 @@
 
 import numpy as np
 import tensorflow as tf
-
-from data import Dataset
+import omniglot
 
 
 __all__ = [
@@ -35,7 +34,7 @@ __all__ = [
 class Generator(tf.keras.utils.Sequence):
     """Sequence generator wrapper around the `omniglot.Dataset` class."""
 
-    def __init__(self, dataset: Dataset, batch_size: int=128):
+    def __init__(self, dataset: omniglot, batch_size: int=128):
         """omniglot.utils.Generator.__init__ now _that_
 
         Args:
@@ -69,7 +68,7 @@ class Generator(tf.keras.utils.Sequence):
         """
 
         # Create a dataset object.
-        dataset = Dataset(*args, **kwargs)
+        dataset = omniglot.Dataset(*args, **kwargs)
 
         # Instantiate a Generator.
         inst = cls(dataset, batch_size)

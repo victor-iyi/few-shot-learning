@@ -21,6 +21,7 @@
 """
 # Supress TensorFlow import warnings.
 from omniglot import supress
+from omniglot import utils
 
 from omniglot.data import Dataset
 from omniglot.visualize import Visualize
@@ -28,6 +29,7 @@ from omniglot.visualize import Visualize
 from omniglot.data import n_runs, compressed_dir, data_dir, base_dir
 
 from omniglot.model import SiameseNetwork
+from omniglot.network import Network
 
 
 __all__ = [
@@ -41,6 +43,7 @@ __all__ = [
 
     # Model.
     'SiameseNetwork',
+    'Network',
 
     'utils',
 ]

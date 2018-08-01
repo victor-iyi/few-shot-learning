@@ -19,8 +19,7 @@
      Copyright (c) 2018. Victor I. Afolabi. All rights reserved.
 """
 # Supress TensorFlow import warnings.
-import supress
-from data import Dataset
+from omniglot import Dataset
 
 import tensorflow as tf
 
@@ -101,11 +100,10 @@ class Network(object):
         # n_params = self._model.count_params()
         # self._log(f'Network has {n_params:,} parameters.')
 
-    def train(self, train_data: Dataset, valid_data: Dataset=None, **kwargs):
+    def train(self, train_data: Dataset, valid_data: Dataset=None, batch_size:int=64, **kwargs):
 
         # Extract keyword arguments.
         epochs = kwargs.setdefault('epochs', 1)
-        batch_size = kwargs.setdefault('batch_size', 64)
         steps_per_epoch = kwargs.setdefault('steps_per_epoch', 128)
 
         # Get batch generators.
@@ -119,7 +117,7 @@ class Network(object):
             valid_gen = valid_data.next_batch(batch_size=batch_size)
             # with validation set.
             self._model.fit_generator(train_gen, validation_data=valid_gen,
-                                      **kwargs)
+                                      validation_steps=batch_size, **kwargs)
 
     def _log(self, *args, **kwargs):
         # No logging if verbose is not 'on'.

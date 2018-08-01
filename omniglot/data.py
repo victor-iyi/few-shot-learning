@@ -29,7 +29,7 @@ from PIL import Image
 import sklearn.utils as sk_utils
 
 # Custom utility module.
-import utils
+import omniglot.utils as utils
 
 # Base data & save directory.
 base_dir, save_dir = 'datasets/', 'saved/'
