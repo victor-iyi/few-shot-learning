@@ -25,11 +25,11 @@ import tensorflow as tf
 from tensorflow import keras
 
 
-class Network(BaseNetwork):
-    """Light-weight implementation of the SiameseNetwork model."""
+class EncoderNetwork(BaseNetwork):
+    """Implementation of an encoder SiameseNetwork model."""
 
     def __init__(self, num_classes=1, **kwargs):
-        super(Network, self).__init__(**kwargs)
+        super(EncoderNetwork, self).__init__(**kwargs)
 
     def build(self,  **kwargs):
         # Number of output classes.
