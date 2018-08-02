@@ -490,7 +490,7 @@ class Dataset(Data):
                 # Get Alphabet's name.
                 _name = os.path.basename(root).replace('_', ' ')
                 _status = "DONE" if status else "ERROR"
-                self._log('{idx:02d}. {_name:<45} {_status}')
+                self._log(f'{idx:02d}. {_name:<45} {_status}')
 
                 # del _name, _status  # Clear extra memory.
 

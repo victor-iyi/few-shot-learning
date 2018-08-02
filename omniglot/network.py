@@ -114,12 +114,12 @@ class Network(object):
 
         # Extract keyword arguments.
         epochs = kwargs.setdefault('epochs', 1)
-        steps_per_epoch = kwargs.setdefault('steps_per_epoch', 128)
-
+        kwargs.setdefault('steps_per_epoch', 128)
         kwargs.setdefault('verbose', self._verbose)
 
         # Get batch generators.
-        train_gen = train_data.next_batch(batch_size=batch_size)
+        train_gen = train_data.next_batch(batch_size=
+
         try:
             # Fit the network.
             if valid_data is None:
@@ -134,8 +134,8 @@ class Network(object):
             # When training is unexpectedly stopped!
             self._log('\nTraining interrupted by user!')
 
-            # Save learned weights.
-            self.save_weights()
+        # Save learned weights after completed training or KeyboardInterrupt.
+        self.save_weights()
 
     def save_weights(self):
         """Save Model's weights to an h5 file."""
@@ -148,7 +148,7 @@ class Network(object):
                                  overwrite=True, save_format=None)
 
         # Pretty prints.
-        self._log(f'Saved model weights to "{self._save_path}"!\n{"-" * 65}\n')
+        self._log(f'Saved model weights to "{self._model_weights}"!\n{"-" * 65}\n')
 
     def _log(self, *args, **kwargs):
         """Logging method helper based on verbosity."""
