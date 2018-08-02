@@ -247,21 +247,24 @@ class BaseNetwork(object):
             optimizer (keras.optimizers.Optimizer, optional): Defaults to keras.optimizers.Adam.
                 Network optimizer. See `keras.Model.compile`
 
-            loss_func (Network.losses, optional): Defaults to BaseNetwork.losses.binary_crossentropy.
+            loss (Network.losses, optional): Defaults to BaseNetwork.losses.binary_crossentropy.
 
             model_dir (str, optional): Defaults to 'saved/models'. Directory
                 where weights and model is saved.
         """
+        # Positional arguments.
+        self.num_classes = num_classes
+
         # Extract Keyword arguments.
-        lr = kwargs.get('lr', 1e-3)
         self._verbose = kwargs.get('verbose', 1)
-        metrics = kwargs.get('metrics', ['accuracy'])
         self._input_shape = kwargs.get('input_shape', (105, 105, 1))
         self._save_weights_only = kwargs.get('save_weights_only', False)
-        self.optimizer = kwargs.get('optimizer', keras.optimizers.Adam(lr=lr))
-
-        self.loss_func = kwargs.get('loss_func', BaseNetwork.losses.binary_crossentropy)
         self._model_dir = kwargs.get('model_dir', 'saved/models/').rstrip('/')
+
+        self.lr = kwargs.get('lr', 1e-3)
+        self.metrics = kwargs.get('metrics', ['accuracy'])
+        self.loss = kwargs.get('loss', BaseNetwork.losses.binary_crossentropy)
+        self.optimizer = kwargs.get('optimizer', keras.optimizers.Adam(lr=self.lr))
 
         # Create model directory if it doesn't already exit.
         if not tf.gfile.IsDirectory(self._model_dir):
@@ -277,9 +280,10 @@ class BaseNetwork(object):
         # Instantiate a Sequential Model. [Can be overriden].
         self._model = self.build(**kwargs)
 
-        # TODO: Get layerwise learning rates and momentum annealing scheme described in the paper.
-        self._model.compile(loss=self.loss_func, optimizer=self.optimizer,
-                            metrics=metrics)
+        # TODO: Get layerwise learning rates and momentum annealing scheme
+        # as described in the paper.
+        self._model.compile(loss=self.loss, optimizer=self.optimizer,
+                            metrics=self.metrics)
 
         # Log summary if verbose is 'on'.
         self._log(callback=self._model.summary)
@@ -289,8 +293,9 @@ class BaseNetwork(object):
         # self._log(f'Network has {n_params:,} parameters.')
 
     def __repr__(self):
-        return (f'Network(input_shape={self._input_shape}, '
-                f'loss_func={self.loss_func}, optimizer={self.optimizer})')
+        return (f'BaseNetwork(input_shape={self._input_shape}, lr={self.lr}, '
+                f'num_classes={self.num_classes}, loss={self.loss}, '
+                f'metrics={self.metrics}, optimizer={self.optimizer})')
 
     def __str__(self):
         return self.__repr__()

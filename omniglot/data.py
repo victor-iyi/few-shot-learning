@@ -25,6 +25,7 @@ import tarfile
 
 import numpy as np
 
+# Loading & suffling image data.
 from PIL import Image
 import sklearn.utils as sk_utils
 
@@ -47,8 +48,10 @@ class Data(object):
         """Data.Mode - Dataset pre-processing mode."""
         TRAIN = "TRAIN"
         TEST = "TEST"
-        VAL = "VALIDATE"
-        VALIDATE = VAL
+        VALIDATE = "VALIDATE"
+
+        # Alias for Validate.
+        VAL = VALIDATE
 
     def __init__(self, **kwargs):
         pass

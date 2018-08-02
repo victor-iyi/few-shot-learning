@@ -28,7 +28,6 @@ __author__ = 'Victor I. Afolabi'
 from omniglot import supress
 from omniglot import utils
 
-
 from omniglot.data import Dataset
 from omniglot.data import n_runs, compressed_dir, data_dir, base_dir
 from omniglot.visualize import Visualize

@@ -10,7 +10,7 @@
      GitHub: https://github.com/victor-iyiola/
 
    @project
-     File: model.py
+     File: network.py
      Package: omniglot
      Created on 13 July, 2018 @ 9:10 PM.
 
@@ -32,8 +32,9 @@ class EncoderNetwork(BaseNetwork):
         super(EncoderNetwork, self).__init__(**kwargs)
 
     def build(self,  **kwargs):
-        # Number of output classes.
-        num_classes = kwargs.get('num_classes', 1)
+        # # Number of output classes.
+        # num_classes = kwargs.get('num_classes', 1)
+        dropout = kwargs.get('dropout', 0.2)
 
         # Input pair inputs.
         pair_1st = keras.Input(shape=self._input_shape)
@@ -78,14 +79,32 @@ class EncoderNetwork(BaseNetwork):
         distance = distance_layer([encoder_1st, encoder_2nd])
 
         # Model prediction: if image pairs are of same letter.
-        output_layer = keras.layers.Dense(num_classes, activation='sigmoid')
+        output_layer = keras.layers.Dense(self.num_classes, activation='sigmoid')
         outputs = output_layer(distance)
 
         # Return a keras Model architecture.
         return keras.Model(inputs=[pair_1st, pair_2nd], outputs=outputs)
 
-    def call(self):
-        pass
+    def call(self, inputs, **kwargs):
+        """Calls the model on new inputs.
+
+        In this case `call` just reapplies all ops in the graph to the new inputs
+        (e.g. build a new computational graph from the provided inputs).
+
+        Args:
+            inputs: A tensor or list of tensors.
+
+        Keyword Args:
+            training: Boolean or boolean scalar tensor, indicating whether to run
+            the `Network` in training mode or inference mode.
+            mask: A mask or list of masks. A mask can be
+                either a tensor or None (no mask).
+
+        Returns:
+            A tensor if there is a single output, or
+            a list of tensors if there are more than one outputs.
+        """
+        return self._model(inputs, **kwargs)
 
 
 class SiameseNetwork(BaseNetwork):
@@ -109,44 +128,46 @@ class SiameseNetwork(BaseNetwork):
     def build(self, **kwargs):
         # Optional Keyword arguments.
         num_classes = kwargs.get('num_classes', 1)
+        dropout = kwargs.get('dropout', 0.2)
 
         # Build a sequential model.
         model = keras.models.Sequential()
 
+        # Re-use pooling layer accross feature extraction layers.
+        self.pool = keras.layers.MaxPool2D(pool_size=(2, 2))
+
         # 1st layer (64@10x10)
-        model.add(keras.layers.Conv2D(filters=64, kernel_size=(10, 10),
-                                      input_shape=self.in_shape,
-                                      activation='relu'))
-        model.add(keras.layers.MaxPool2D(pool_size=(2, 2)))
+        self.conv1 = keras.layers.Conv2D(filters=64, kernel_size=(10, 10),
+                                         input_shape=self._input_shape,
+                                         activation='relu')
 
         # 2nd layer (128@7x7)
-        model.add(keras.layers.Conv2D(filters=128, kernel_size=(7, 7),
-                                      activation=tf.'relu'))
-        model.add(keras.layers.MaxPool2D(pool_size=(2, 2)))
+        self.conv2 = keras.layers.Conv2D(filters=128, kernel_size=(7, 7),
+                                         activation='relu')
 
         # 3rd layer (128@4x4)
-        model.add(keras.layers.Conv2D(filters=128, kernel_size=(4, 4),
-                                      activation='relu'))
-        model.add(keras.layers.MaxPool2D(pool_size=(2, 2)))
+        self.conv3 = keras.layers.Conv2D(filters=128, kernel_size=(4, 4),
+                                         activation='relu')
 
         # 4th layer (265@4x4)
-        model.add(keras.layers.Conv2D(filters=256, kernel_size=(4, 4),
-                                      activation='relu'))
-        model.add(keras.layers.MaxPool2D(pool_size=(2, 2)))
+        self.conv4 = keras.layers.Conv2D(filters=256, kernel_size=(4, 4),
+                                         activation='relu')
 
         # 5th layer  (9216x4096)
-        model.add(keras.layers.Flatten())
-        model.add(keras.layers.Dense(units=4096,
-                                     activation='sigmoid'))
+        self.flatten = keras.layers.Flatten()
+        self.dense1 = keras.layers.Dense(units=4096, activation='sigmoid')
 
         # 6th - L1 layer -distance layer.
-        model.add(keras.layers.Lambda(self.dist_func))
+        self.dist_layer = keras.layers.Lambda(self.dist_func)
 
         # Output layer (4096x1)
-        model.add(keras.layers.Dense(units=num_classes,
-                                     activation='sigmoid'))
+        self.pred = keras.layers.Dense(units=num_classes, activation='sigmoid')
 
-        return model
+        # Input layer (2, 105, 105, 1)
+        input_1 = self._construct()
+        input_2 = self._construct()
+
+        model = keras.Model(inputs=input_1, outputs=self.pred)
 
     def call(self, inputs, **kwargs):
         """Calls the model on new inputs.
@@ -186,7 +207,7 @@ class SiameseNetwork(BaseNetwork):
 if __name__ == '__main__':
     import numpy as np
 
-    net = SiameseNetwork(loss_func=SiameseNetwork.triplet_loss)
+    net = SiameseNetwork(loss=SiameseNetwork.triplet_loss)
 
     # Image pairs in `np.ndarray`.
     first = np.random.randn(1, 105, 105, 1)
@@ -196,5 +217,3 @@ if __name__ == '__main__':
     pairs = [tf.constant(first), tf.constant(second)]
 
     net(pairs)
-
-    net.summary()
