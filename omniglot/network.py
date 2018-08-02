@@ -137,18 +137,38 @@ class Network(object):
         # Save learned weights after completed training or KeyboardInterrupt.
         self.save_weights()
 
-    def save_weights(self):
-        """Save Model's weights to an h5 file."""
+    def save_weights(self, weights_only=False):
+        """Save model's parameters or weights only to an h5 file.
+
+        Args:
+            weights_only (bool, optional): Defaults to False. If set to true,
+                only model's weights will be saved.
+        """
 
         # Pretty prints.
         self._log(f'\n{"-" * 65}\nSaving model...')
     
-        # Save model weights.
-        self._model.save_weights(filepath=self._model_weights,
-                                 overwrite=True, save_format=None)
+        if weights_only:
+            # Save model weights.
+            self._model.save_weights(filepath=self._model_weights,
+                                    overwrite=True, save_format=None)
+        else:
+            # Save entire model.
+            self._model.save(filepath=self._model_file,
+                             overwrite=True, save_format=None)
 
         # Pretty prints.
         self._log(f'Saved model weights to "{self._model_weights}"!\n{"-" * 65}\n')
+
+    def load_model(self):
+        """Load a saved model."""
+
+        if tf.gfile.Exists(self._model_file):
+            self._model = keras.models.load_model(self._model_file)
+        elif tf.gfile.Exists(self._model_weights):
+            self._model = keras.models.load_model(self._model_weights)
+        else:
+            raise FileNotExistError('Neither model weight or entire model was found.')
 
     def _log(self, *args, **kwargs):
         """Logging method helper based on verbosity."""
