@@ -18,32 +18,22 @@
      MIT License
      Copyright (c) 2018. Victor I. Afolabi. All rights reserved.
 """
-# Supress TensorFlow import warnings.
-from omniglot import Dataset
+from omniglot import Dataset, BaseNetwork
 
 import tensorflow as tf
 
 from tensorflow import keras
 
 
-class Network(object):
+class Network(BaseNetwork):
     """Light-weight implementation of the SiameseNetwork model."""
 
     def __init__(self, num_classes=1, **kwargs):
+        super(Network, self).__init__(**kwargs)
 
-        self.num_classes = num_classes
-
-        # Extract Keyword arguments.
-        self._input_shape = kwargs.get('input_shape', (105, 105, 1))
-        self._verbose = kwargs.get('verbose', 1)
-        self._model_dir = kwargs.get('model_dir', 'saved/models/').rstrip('/')
-
-        # Create model directory if it doesn't already exit.
-        if not tf.gfile.IsDirectory(self._model_dir):
-            tf.gfile.MakeDirs(self._model_dir)
-
-        # Path to save model's weights.
-        self._model_weights = f'{self._model_dir}/network-weights.h5'
+    def build(self,  **kwargs):
+        # Number of output classes.
+        num_classes = kwargs.get('num_classes', 1)
 
         # Input pair inputs.
         pair_1st = keras.Input(shape=self._input_shape)
@@ -82,7 +72,7 @@ class Network(object):
         encoder_2nd = net(pair_2nd)
 
         # Layer to merge two encoded inputs with the l1 distance between them.
-        distance_layer = keras.layers.Lambda(lambda x: tf.abs(x[0] - x[1]))
+        distance_layer = keras.layers.Lambda(self.dist_func)
 
         # Call this layer on list of two input tensors.
         distance = distance_layer([encoder_1st, encoder_2nd])
@@ -91,34 +81,23 @@ class Network(object):
         output_layer = keras.layers.Dense(num_classes, activation='sigmoid')
         outputs = output_layer(distance)
 
-        # Model.
-        self._model = keras.Model(inputs=[pair_1st, pair_2nd], outputs=outputs)
-        # Extract keyword arguments.
-        lr = kwargs.get('lr', 1e-3)
+        # Return a keras Model architecture.
+        return keras.Model(inputs=[pair_1st, pair_2nd], outputs=outputs)
 
-        # Optimizer.
-        optimizer = keras.optimizers.Adam(lr=lr)
+    def train(self, train_data: Dataset, valid_data: Dataset=None,
+              batch_size: int=64, resume_training=True, **kwargs):
 
-        # TODO: Get layerwise learning rates and momentum annealing scheme described in paperworking.
-        self._model.compile(loss="binary_crossentropy",
-                            optimizer=optimizer, metrics=['accuracy'])
-
-        # Log summary if verbose is 'on'.
-        self._log(callback=self._model.summary)
-
-        # Parameter count.
-        # n_params = self._model.count_params()
-        # self._log(f'Network has {n_params:,} parameters.')
-
-    def train(self, train_data: Dataset, valid_data: Dataset=None, batch_size: int=64, **kwargs):
-
-        # Extract keyword arguments.
-        epochs = kwargs.setdefault('epochs', 1)
+        # Set default keyword arguments.
+        kwargs.setdefault('epochs', 1)
         kwargs.setdefault('steps_per_epoch', 128)
         kwargs.setdefault('verbose', self._verbose)
 
         # Get batch generators.
-        train_gen = train_data.next_batch(batch_size=
+        train_gen = train_data.next_batch(batch_size=batch_size)
+
+        # Resume training.
+        if resume_training and tf.gfile.Exists(self._save_path):
+            self.load_model()
 
         try:
             # Fit the network.
@@ -129,146 +108,10 @@ class Network(object):
                 valid_gen = valid_data.next_batch(batch_size=batch_size)
                 # with validation set.
                 self._model.fit_generator(train_gen, validation_data=valid_gen,
-                                        validation_steps=batch_size, **kwargs)
+                                          validation_steps=batch_size, **kwargs)
         except KeyboardInterrupt:
             # When training is unexpectedly stopped!
             self._log('\nTraining interrupted by user!')
 
         # Save learned weights after completed training or KeyboardInterrupt.
-        self.save_weights()
-
-    def save_weights(self, weights_only=False):
-        """Save model's parameters or weights only to an h5 file.
-
-        Args:
-            weights_only (bool, optional): Defaults to False. If set to true,
-                only model's weights will be saved.
-        """
-
-        # Pretty prints.
-        self._log(f'\n{"-" * 65}\nSaving model...')
-    
-        if weights_only:
-            # Save model weights.
-            self._model.save_weights(filepath=self._model_weights,
-                                    overwrite=True, save_format=None)
-        else:
-            # Save entire model.
-            self._model.save(filepath=self._model_file,
-                             overwrite=True, save_format=None)
-
-        # Pretty prints.
-        self._log(f'Saved model weights to "{self._model_weights}"!\n{"-" * 65}\n')
-
-    def load_model(self):
-        """Load a saved model."""
-
-        if tf.gfile.Exists(self._model_file):
-            self._model = keras.models.load_model(self._model_file)
-        elif tf.gfile.Exists(self._model_weights):
-            self._model = keras.models.load_model(self._model_weights)
-        else:
-            raise FileNotExistError('Neither model weight or entire model was found.')
-
-    def _log(self, *args, **kwargs):
-        """Logging method helper based on verbosity."""
-
-        # No logging if verbose is not 'on'.
-        if self._verbose is not 1:
-            return
-
-        # Handle for callbacks.
-        callback = kwargs.setdefault('callback', None)
-        params = kwargs.setdefault('params', None)
-
-        # Call any callbacks if it is callable.
-        if callback and callable(callback):
-            # Callback with no params or with params.
-            callback() if params is None else callback(params)
-
-        # Remove callback & params keys.
-        kwargs.pop('callback')
-        kwargs.pop('params')
-
-        # Log other args & kwargs.
-        print(*args, **kwargs)
-
-    @staticmethod
-    def triplet_loss(y_true, y_pred, alpha=0.2):
-        """Triplet Loss function to compare pairs of
-
-        Args:
-            y_pred (tf.Tensor): Encoding of anchor & positive example.
-            y_true (tf.Tensor): Encoding of anchor & negative example.
-            alpha (float, optional): Defaults to 0.2. Margin added to f(A, P).
-
-        Returns:
-            tf.Tensor: Triplet loss.
-        """
-
-        # Triplet loss for a single image.
-        loss = tf.maximum(y_true - y_pred + alpha, 0)
-
-        # Sum over all images.
-        return tf.reduce_sum(loss, axis=1, name="Triplet_Loss")
-
-    @staticmethod
-    def binary_crossentropy(y_true, y_pred):
-        """Binary crossentropy between an output tensor and a target tensor.
-
-        Args:
-            y_true: A tensor with the same shape as `output`.
-            y_pred: A tensor.
-
-        Returns:
-            tf.tensor: Binary crossentropy loss.
-        """
-
-        # Binary crossentropy loss function.
-        return keras.losses.binary_crossentropy(y_true, y_pred)
-
-    @staticmethod
-    def contrastive_loss(y_true, y_pred, alpha=0.2):
-        """Contrastive loss function.
-
-        Binary cross entropy between the predictions and targets.
-        There is also a L2 weight decay term in the loss to encourage
-        the network to learn smaller/less noisy weights and possibly
-        improve generalization:
-
-        L(x1, x2, t) = t⋅log(p(x1 ∘ x2)) + (1−t)⋅log(1 − p(x1 ∘ x2)) + λ⋅||w||2
-
-        Args:
-            y_pred (any): Predicted distance between two inputs.
-            y_true (any): Ground truth or target, t (where, t = [1 or 0]).
-
-            alpha (float, optional): Defaults to 0.2. Slight margin
-                added to prediction to avoid 0-learning.
-
-        Returns:
-            tf.Tensor: Constrictive loss function.
-        """
-
-        loss = y_true * tf.log(y_true) + (1 - y_pred) * tf.log(1 - y_pred) + alpha
-
-        return tf.reduce_mean(loss, name="contrastive_loss")
-
-    @property
-    def model(self):
-        """Network background model.
-        
-        Returns:
-            keras.Model: Underlaying model used by Network.
-        """
-
-        return self._model
-
-    @property
-    def weight_path(self):
-        """Model saved weight path.
-        
-        Returns:
-            str: Path to an h5 file.
-        """
-
-        return self._model_weights
+        self.save_model()

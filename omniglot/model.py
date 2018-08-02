@@ -51,14 +51,14 @@ class SiameseNetwork(keras.Model):
         # Keyword Arguments.
         self._verbose = kwargs.get('verbose', 1)
         self.in_shape = kwargs.get('input_shape', (105, 105, 1))
-        self.model_dir = kwargs.get('model_dir', 'saved/models/').rstrip('/')
+        self._model_dir = kwargs.get('model_dir', 'saved/models/').rstrip('/')
 
         # Create model directory if it doesn't already exit.
-        if not tf.gfile.IsDirectory(self.model_dir):
-            tf.gfile.MakeDirs(self.model_dir)
+        if not tf.gfile.IsDirectory(self._model_dir):
+            tf.gfile.MakeDirs(self._model_dir)
 
         # Path to save model's weights.
-        self.model_weights = f'{self.model_dir}/model-weights.h5'
+        self.model_weights = f'{self._model_dir}/model-weights.h5'
 
         # # Input layer.
         # self.input_layer = keras.layers.InputLayer(input_shape=self.in_shape,
@@ -174,7 +174,7 @@ class SiameseNetwork(keras.Model):
         # )
 
         # Saved model filepath.
-        filepath = f'{ self.model_dir}/model-{"epoch:03d"}.h5'
+        filepath = f'{ self._model_dir}/model-{"epoch:03d"}.h5'
 
         # Defaults to save best model.
         kwargs.setdefault('save_best_only', True)
@@ -191,17 +191,17 @@ class SiameseNetwork(keras.Model):
             tf.estimator: Estimator model of current keras model.
         """
         # Current Keras model.
-        keras_model = self
+        keras_model = self._model
 
         # Convert keras model to `tf.estimator`.
-        # noinspection PyMethodFirstArgAssignment
-        self = keras.estimator.model_to_estimator(keras_model=keras_model,
-                                                  model_dir='saved/models/estimator')
+        self._model = keras.estimator.model_to_estimator(keras_model=keras_model,
+                                                         model_dir='saved/models/estimator')
+
         # Current object is now a tf.estimator object.
         self.is_estimator = True
 
         # Return estimator model.
-        return self
+        return self._model
 
     @staticmethod
     def triplet_loss(y_true, y_pred, alpha=0.2):

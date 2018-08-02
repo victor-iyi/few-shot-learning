@@ -28,8 +28,9 @@ from omniglot.visualize import Visualize
 
 from omniglot.data import n_runs, compressed_dir, data_dir, base_dir
 
-from omniglot.model import SiameseNetwork
+from omniglot.base import BaseNetwork
 from omniglot.network import Network
+from omniglot.model import SiameseNetwork
 
 
 __all__ = [
@@ -44,6 +45,7 @@ __all__ = [
     # Model.
     'SiameseNetwork',
     'Network',
+    'BaseNetwork',
 
     'utils',
 ]
