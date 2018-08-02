@@ -19,8 +19,8 @@
      Copyright (c) 2018. Victor I. Afolabi. All rights reserved.
 """
 
+import keras
 import tensorflow as tf
-from tensorflow import keras
 
 from omniglot import BaseNetwork, Dataset
 

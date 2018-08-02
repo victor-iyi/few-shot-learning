@@ -18,10 +18,13 @@
      MIT License
      Copyright (c) 2018. Victor I. Afolabi. All rights reserved.
 """
-
-import tensorflow as tf
-from tensorflow import keras
+# Built-in for Abstract Base Classes.
 from abc import ABCMeta, abstractmethod
+
+# Third-party libraries.
+import keras
+import tensorflow as tf
+from keras.utils.vis_utils import model_to_dot
 
 # Omniglot dataset helper class.
 from omniglot import Dataset
@@ -293,9 +296,8 @@ class BaseNetwork(object):
         # self._log(f'Network has {n_params:,} parameters.')
 
     def __repr__(self):
-        return (f'BaseNetwork(input_shape={self._input_shape}, lr={self.lr}, '
-                f'num_classes={self.num_classes}, loss={self.loss}, '
-                f'metrics={self.metrics}, optimizer={self.optimizer})')
+        return (f'BaseNetwork(input_shape={self._input_shape}, loss={self.loss},'
+                f' optimizer={self.optimizer}), metrics={self.metrics}')
 
     def __str__(self):
         return self.__repr__()
@@ -374,7 +376,7 @@ class BaseNetwork(object):
         kwargs.setdefault('epochs', 1)
         kwargs.setdefault('steps_per_epoch', 128)
         kwargs.setdefault('verbose', self._verbose)
-        kwargs.setdefault('callbacks', self.callbacks())
+        # kwargs.setdefault('callbacks', self.callbacks())
 
         # Get batch generators.
         train_gen = train_data.next_batch(batch_size=batch_size)
@@ -462,10 +464,11 @@ class BaseNetwork(object):
 
         if weights_only:
             # Save model weights.
-            self._model.save_weights(filepath=self._save_path, overwrite=True)
+            self._model.save_weights(filepath=self._save_path, save_format='h5')
         else:
             # Save entire model.
-            self._model.save(filepath=self._save_path, overwrite=True)
+            # self._model.save(filepath=self._save_path)
+            keras.models.save_model(model=self._model, filepath=self._save_path)
 
         # Pretty prints.
         self._log(f'Saved model weights to "{self._save_path}"!\n{"-" * 65}\n')
@@ -487,6 +490,18 @@ class BaseNetwork(object):
             raise FileNotFoundError(f'{self._save_path} was not found.')
 
         return self._model
+
+    def plot_model(self, **kwargs):
+        # Set default keyword arguments.
+        kwargs.setdefault('rankdir', 'TB')
+        kwargs.setdefault('show_shapes', False)
+        kwargs.setdefault('show_layer_names', True)
+
+        # Convert Keras model to plot.
+        dot = model_to_dot(self._model, **kwargs)
+
+        # Create plot as an SVG byte string to be read by IPython SVG function.
+        return dot.create(prog='dot', format='svg')
 
     def _log(self, *args, **kwargs):
         """Logging method helper based on verbosity."""
@@ -522,7 +537,7 @@ class BaseNetwork(object):
             tf.Tensor: Absolute squared difference between two inputs.
         """
 
-        return tf.square(tf.abs(x[0] - x[1]))
+        return abs(x[0] - x[1])
 
     @property
     def model(self):
