@@ -1,8 +1,10 @@
 """Omniglot helper package.
 
    @description
-     Model - For training, validating/evaluating & predictions with SiameseNetwork.
-     Dataset - For visualizing, pre-processing and loading the Omniglot dataset.
+     Network - For training, validating/evaluating & predictions with SiameseNetwork.
+     Dataset - For pre-processing and loading the Omniglot dataset.
+     Visualize - For visualizing the Omniglot dataset & model.
+     utils - For converting values to Tensor & pre-paring dataset for `tf.estimator` API.
 
    @author
      Victor I. Afolabi
@@ -19,33 +21,36 @@
      MIT License
      Copyright (c) 2018. Victor I. Afolabi. All rights reserved.
 """
+
+__author__ = 'Victor I. Afolabi'
+
 # Supress TensorFlow import warnings.
 from omniglot import supress
 from omniglot import utils
 
+
 from omniglot.data import Dataset
+from omniglot.data import n_runs, compressed_dir, data_dir, base_dir
 from omniglot.visualize import Visualize
 
-from omniglot.data import n_runs, compressed_dir, data_dir, base_dir
-
-from omniglot.base import BaseNetwork
-from omniglot.network import Network
-from omniglot.model import SiameseNetwork
+from omniglot.base import BaseNetwork, Loss
+from omniglot.network import SiameseNetwork, EncoderNetwork
 
 
 __all__ = [
-    # Dataset.
+    # Dataset helpers.
     'base_dir', 'data_dir',
     'compressed_dir', 'n_runs',
     'Dataset',
 
-    # Visualization.
+    # Visualization helper.
     'Visualize',
 
-    # Model.
+    # Network/Model helpers.
     'SiameseNetwork',
-    'Network',
-    'BaseNetwork',
+    'EncoderNetwork',
+    'BaseNetwork', 'Loss',
 
+    # Input helpers.
     'utils',
 ]

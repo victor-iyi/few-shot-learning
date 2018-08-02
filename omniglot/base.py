@@ -18,12 +18,17 @@
      MIT License
      Copyright (c) 2018. Victor I. Afolabi. All rights reserved.
 """
-from omniglot import Dataset
-
-from abc import ABCMeta, ababstractmethod, abstabstractproperty
 
 import tensorflow as tf
 from tensorflow import keras
+from abc import ABCMeta, abstractmethod
+
+# Omniglot dataset helper class.
+from omniglot import Dataset
+
+
+# Classes in this file.
+__all__ = ['BaseNetwork', 'Loss']
 
 
 class Loss(object):
@@ -93,11 +98,12 @@ class Loss(object):
 class BaseNetwork(object):
     """Base class for building models for One-shot learning.
 
-    Special Methods:
-        def __call__(self, inputs, **kwargs):
+    Methods:
+        @abstractmethod
+        def call(self, inputs, **kwargs):
             Calls the model on new inputs. In this case `call` just reapplies
-            all ops in the graph to the new inputs (e.g. build a new computational
-            graph from the provided inputs).
+                all ops in the graph to the new inputs (e.g. build a new
+                computational graph from the provided inputs).
             Args:
                 inputs: A tensor or list of tensors.
             Keyword Args:
@@ -108,11 +114,6 @@ class BaseNetwork(object):
             Returns:
                 A tensor if there is a single output, or
                 a list of tensors if there are more than one outputs.
-
-    Methods:
-        @abstractmethod
-        def call(self, **kwargs):
-            Calls the model on new inputs.
 
         @abstractmethod
         def build(self, **kwargs):
@@ -297,6 +298,14 @@ class BaseNetwork(object):
     def __call__(self, inputs, **kwargs):
         """Calls the model on new inputs.
 
+        See `BaseNetwork.call`.
+        """
+        return self.call(inputs, **kwargs)
+
+    @abstractmethod
+    def call(self, **kwargs):
+        """Calls the model on new inputs.
+
         In this case `call` just reapplies all ops in the graph to the new inputs
         (e.g. build a new computational graph from the provided inputs).
 
@@ -313,10 +322,6 @@ class BaseNetwork(object):
             A tensor if there is a single output, or
             a list of tensors if there are more than one outputs.
         """
-        return self.call(inputs, **kwargs)
-
-    @abstractmethod
-    def call(self, **kwargs):
         raise NotImplementedError('Sub-class must override `call` method.')
 
     @abstractmethod
@@ -364,6 +369,7 @@ class BaseNetwork(object):
         kwargs.setdefault('epochs', 1)
         kwargs.setdefault('steps_per_epoch', 128)
         kwargs.setdefault('verbose', self._verbose)
+        kwargs.setdefault('callbacks', self.callbacks())
 
         # Get batch generators.
         train_gen = train_data.next_batch(batch_size=batch_size)
