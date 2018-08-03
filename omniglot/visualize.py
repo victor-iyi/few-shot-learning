@@ -260,5 +260,27 @@ class Visualize(object):
         plt.show()
 
     @staticmethod
-    def one_shot_task():
-        pass
+    def accuracies(ways: np.ndarray, train: np.ndarray=None, valid: np.ndarray=None,
+                   benchmark: np.ndarray=None):
+        # Plot the accuracy vs few-shot learning type/ways for each.
+        fig, ax = plt.subplots(1)
+
+        if train is not None:
+            ax.plot(ways, train, "y", label="Encoder net (train)")
+
+        if valid is not None:
+            ax.plot(ways, valid, "m", label="Encoder net (validation)")
+
+        if benchmark is not None:
+            ax.plot(ways, benchmark, label="Nearest neighbour (benchmark)")
+
+        # Random guessing.
+        ax.plot(ways, 100.0 / ways, "g", label="Random guessing (benchmark)")
+
+        # Axis labels.
+        plt.ylabel("Accuracy (%)")
+        plt.xlabel("No. of possible classes in few-shot tasks")
+
+        # Plot title & display figure.
+        plt.title("Omiglot Few-Shot Learning Performance")
+        plt.show()

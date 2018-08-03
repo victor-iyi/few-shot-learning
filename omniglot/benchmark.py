@@ -20,7 +20,6 @@
      Copyright (c) 2018. Victor I. Afolabi. All rights reserved.
 """
 import numpy as np
-from scipy.spatial.distance import euclidean
 
 
 class Benchmark(object):
@@ -44,8 +43,9 @@ class Benchmark(object):
         # To store distance summed over each neighbor lookup.
         distance = np.zeros_like(targets)
 
-        for i, (pair1, pair2) in enumerate(pairs):
-            distance[i] = np.sum(euclidean(pair1, pair2))
+        for i, pair in enumerate(pairs):
+            dist = np.sqrt(pair[0] ** 2 - pair[1] ** 2)
+            distance[i] = np.sum(dist)
 
         # The closest distance wins is the same as correct target.
         correct = np.argmin(distance) == np.argmax(targets)
@@ -63,26 +63,12 @@ class Benchmark(object):
             trials (int, optional): Defaults to half of `self.data`. How many
             trails to be predicted.
         """
-        trails = trials or len(self.data) // 2
+        trials = trials or len(self.data) // 2
         correct = 0
 
-        for i in range(trails):
+        for i in range(trials):
             pairs, targets = self.data.one_shot_task(n)
             correct += self.predict(pairs, targets)
 
+        print('Trials = {} Correct = {}'.format(trials, correct))
         return correct / trials
-
-
-def test_nn_accuracy(N_ways, n_trials, loader):
-    """Returns accuracy of one shot."""
-    print(("Evaluating nearest neighbour on {} unique {}"
-           "way one-shot learning tasks ...").format(n_trials, N_ways))
-
-    n_right = 0
-
-    for i in range(n_trials):
-        pairs, targets = loader.make_oneshot_task(N_ways, "val")
-        correct = nearest_neighbour_correct(pairs, targets)
-        n_right += correct
-
-    return 100.0 * n_right / n_trials
