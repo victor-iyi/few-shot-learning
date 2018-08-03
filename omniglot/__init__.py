@@ -32,6 +32,8 @@ from omniglot.data import Dataset
 from omniglot.data import n_runs, compressed_dir, data_dir, base_dir
 from omniglot.visualize import Visualize
 
+from omniglot.benchmark import Benchmark
+
 from omniglot.base import BaseNetwork, Loss
 from omniglot.network import SiameseNetwork, EncoderNetwork
 
@@ -44,6 +46,9 @@ __all__ = [
 
     # Visualization helper.
     'Visualize',
+
+    # Benchmarking helper.
+    'Benchmark',
 
     # Network/Model helpers.
     'SiameseNetwork',
