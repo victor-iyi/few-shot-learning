@@ -52,7 +52,7 @@ class Benchmark(object):
 
         return 1 if correct else 0
 
-    def score(self, n: int, trials: int=None):
+    def score(self, n: int, trials: int=None, **kwargs):
         """Evaluate accuracy of nearest neighbor lookup on N-way one-shot task
         for `trials` number of trials.
 
@@ -62,13 +62,20 @@ class Benchmark(object):
                 learning.
             trials (int, optional): Defaults to half of `self.data`. How many
             trails to be predicted.
+
+        Keyword Args:
+            verbose (int, optional): Defaults to 1. Values are either 0 or 1.
         """
+        # Extract keyword arguments.
+        verbose = kwargs.get('verbose', 1)
+
         trials = trials or len(self.data) // 2
         correct = 0
 
         for i in range(trials):
             pairs, targets = self.data.one_shot_task(n)
             correct += self.predict(pairs, targets)
+        if verbose:
+            print(f'{n:,}-way few-shot task w/ {trials:,} trials = {correct/trials:.2%}')
 
-        print('Trials = {} Correct = {}'.format(trials, correct))
         return correct / trials

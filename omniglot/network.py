@@ -18,6 +18,7 @@
      MIT License
      Copyright (c) 2018. Victor I. Afolabi. All rights reserved.
 """
+import multiprocessing
 
 import keras
 import tensorflow as tf
@@ -104,7 +105,15 @@ class EncoderNetwork(BaseNetwork):
             A tensor if there is a single output, or
             a list of tensors if there are more than one outputs.
         """
-        return self._model(inputs, **kwargs)
+
+        # Extract keyword arguments.
+        kwargs.setdefault('verbose', self._verbose)
+        # kwargs.setdefault('use_multiprocessing', True)
+        # kwargs.setdefault('workers', multiprocessing.cpu_count())
+
+        first, second = inputs[0], inputs[1]
+
+        return self._model.predict([first, second], **kwargs)
 
 
 class SiameseNetwork(BaseNetwork):

@@ -18,6 +18,8 @@
      MIT License
      Copyright (c) 2018. Victor I. Afolabi. All rights reserved.
 """
+import multiprocessing
+
 # Built-in for Abstract Base Classes.
 from abc import ABCMeta, abstractmethod
 
@@ -331,6 +333,9 @@ class BaseNetwork(object):
         """
         raise NotImplementedError('Sub-class must override `call` method.')
 
+    # Create alias for predicting/calling the model.
+    predict = call
+
     @abstractmethod
     def build(self, **kwargs):
         """Build the network architecture which returns a Keras model (instance
@@ -376,6 +381,8 @@ class BaseNetwork(object):
         kwargs.setdefault('epochs', 1)
         kwargs.setdefault('steps_per_epoch', 128)
         kwargs.setdefault('verbose', self._verbose)
+        kwargs.setdefault('use_multiprocessing', True)
+        kwargs.setdefault('workers', multiprocessing.cpu_count())
         # kwargs.setdefault('callbacks', self.callbacks())
 
         # Get batch generators.
@@ -506,8 +513,10 @@ class BaseNetwork(object):
     def _log(self, *args, **kwargs):
         """Logging method helper based on verbosity."""
 
+        verbose = kwargs.setdefault('verbose', self._verbose)
+
         # No logging if verbose is not 'on'.
-        if self._verbose is not 1:
+        if not verbose:
             return
 
         # Handle for callbacks.
@@ -519,9 +528,10 @@ class BaseNetwork(object):
             # Callback with no params or with params.
             callback() if params is None else callback(params)
 
-        # Remove callback & params keys.
-        kwargs.pop('callback')
+        # Remove params, verbose & callback keys.
         kwargs.pop('params')
+        kwargs.pop('verbose')
+        kwargs.pop('callback')
 
         # Log other args & kwargs.
         print(*args, **kwargs)

@@ -266,21 +266,27 @@ class Visualize(object):
         fig, ax = plt.subplots(1)
 
         if train is not None:
-            ax.plot(ways, train, "y", label="Encoder net (train)")
+            plt.plot(ways, train, "c", label="Encoder net (train)")
 
         if valid is not None:
-            ax.plot(ways, valid, "m", label="Encoder net (validation)")
-
-        if benchmark is not None:
-            ax.plot(ways, benchmark, label="Nearest neighbour (benchmark)")
+            plt.plot(ways, valid, "m", label="Encoder net (validation)")
 
         # Random guessing.
-        ax.plot(ways, 100.0 / ways, "g", label="Random guessing (benchmark)")
+        plt.plot(ways, 100.0 / ways, "k", label="Random guessing (benchmark)")
+
+        if benchmark is not None:
+            plt.plot(ways, benchmark, "y", label="Nearest neighbour (benchmark)")
 
         # Axis labels.
         plt.ylabel("Accuracy (%)")
         plt.xlabel("No. of possible classes in few-shot tasks")
 
+        # Position legend correctly.
+        box = ax.get_position()
+        ax.set_position([box.x0, box.y0, box.width * 0.8, box.height])
+        ax.legend(loc='center left', bbox_to_anchor=(1, 0.5))
+
         # Plot title & display figure.
         plt.title("Omiglot Few-Shot Learning Performance")
+
         plt.show()

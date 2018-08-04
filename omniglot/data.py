@@ -559,7 +559,7 @@ class Dataset(Data):
                 cat2 = (cat1 + rand(1, self.n_classes)) % self.length
             second[i, :, :, :] = self._images[cat2, idx2].reshape(img_dim)
 
-        pairs = [first, second]
+        pairs = np.asarray([first, second])
 
         return pairs, targets
 
@@ -609,7 +609,7 @@ class Dataset(Data):
 
         return pairs, targets
 
-    def test_one_shot_task(self, model: any, n: int, trials: int=None):
+    def test_one_shot_task(self, model: any, n: int, trials: int=None, **kwargs):
         """Test average N way oneshot learning accuracy of a
         SiameseNetwork over k one-shot tasks.
 
@@ -622,9 +622,11 @@ class Dataset(Data):
         Returns:
             float: Accuracy fraction in range $0. \le x \le 1.$.
         """
+        # Extract keyword arguments.
+        verbose = kwargs.get('verbose', self._verbose)
 
-        self._log(f'Evaluating model on {trials} random {n}'
-                  ' way one-shot learning tasks...')
+        self._log(f'\nEvaluating model on {trials} random {n}'
+                  ' way one-shot learning tasks...', verbose=verbose)
 
         # Number of trials to run.
         trials = trials or self.length // 2
@@ -637,7 +639,7 @@ class Dataset(Data):
             pairs, targets = self.one_shot_task(n)
 
             # Make predictions.
-            probs = model(pairs)
+            probs = model(pairs, verbose=0)
 
             # Increment correct prediction if the prediction is correct.
             correct += 1 if np.argmax(probs) == np.argmax(targets) else 0
@@ -645,8 +647,8 @@ class Dataset(Data):
         # Calculate correct percentage.
         pct = correct / trials
 
-        self._log(f'Got an average of {pct:.2%} '
-                  f'{n} way one-shot learning accuracy')
+        self._log(f'Got an average of {pct:.2%} {n:,} way'
+                  'few-shot learning accuracy!', verbose=verbose)
 
         return pct
 
@@ -726,10 +728,30 @@ class Dataset(Data):
         self.save(self, f'omniglot.{self._mode}'.lower())
 
     def _log(self, *args, **kwargs):
-        """Custom logger method for debug purposes."""
+        """Logging method helper based on verbosity."""
 
-        if self._verbose:
-            print(*args, **kwargs)
+        verbose = kwargs.setdefault('verbose', self._verbose)
+
+        # No logging if verbose is not 'on'.
+        if not verbose:
+            return
+
+        # Handle for callbacks.
+        callback = kwargs.setdefault('callback', None)
+        params = kwargs.setdefault('params', None)
+
+        # Call any callbacks if it is callable.
+        if callback and callable(callback):
+            # Callback with no params or with params.
+            callback() if params is None else callback(params)
+
+        # Remove params, verbose & callback keys.
+        kwargs.pop('params')
+        kwargs.pop('verbose')
+        kwargs.pop('callback')
+
+        # Log other args & kwargs.
+        print(*args, **kwargs)
 
     @property
     def cache_dir(self):
