@@ -265,6 +265,10 @@ class Visualize(object):
         # Plot the accuracy vs few-shot learning type/ways for each.
         fig, ax = plt.subplots(1)
 
+        # Re-scale accuracy from fraction to percentages.
+        train, valid, benchmark = np.array(train), np.array(valid), np.array(benchmark)
+        train, valid, benchmark = train * 100, valid * 100, benchmark * 100
+
         if train is not None:
             plt.plot(ways, train, "c", label="Encoder net (train)")
 

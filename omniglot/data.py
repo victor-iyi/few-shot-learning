@@ -559,7 +559,7 @@ class Dataset(Data):
                 cat2 = (cat1 + rand(1, self.n_classes)) % self.length
             second[i, :, :, :] = self._images[cat2, idx2].reshape(img_dim)
 
-        pairs = np.asarray([first, second])
+        pairs = [first, second]
 
         return pairs, targets
 
