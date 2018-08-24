@@ -95,7 +95,8 @@ class Loss(object):
             tf.Tensor: Constrictive loss function.
         """
 
-        loss = y_true * tf.log(y_true) + (1 - y_pred) * tf.log(1 - y_pred) + alpha
+        loss = y_true * tf.log(y_true) + (1 - y_pred) \
+            * tf.log(1 - y_pred) + alpha
 
         return tf.reduce_mean(loss, name="contrastive_loss")
 
@@ -142,8 +143,8 @@ class BaseNetwork(object):
               batch_size (int, optional): Defaults to 64. Training & validation
                 mini-batch size.
               resume_training (bool, optional): Defaults to True. If set to
-                `True`, training will be continued from previously saved h5 file
-                (Network.save_path).
+                `True`, training will be continued from previously saved h5
+                file (Network.save_path).
             Keyword Args:
               See `keras.models.Model.fit_generator` for more options.
 
@@ -152,8 +153,8 @@ class BaseNetwork(object):
             Keyword Args:
                 See `keras.callbacks.ModelCheckpoint`.
             Raises:
-                NotImplementedError: `keras.save_model` hasn't been implemented for
-                    model subclassing.
+                NotImplementedError: `keras.save_model` hasn't been implemented
+                    for model subclassing.
 
         def to_estimator(self):
             Convert this model to `tf.estimator`.
@@ -163,8 +164,8 @@ class BaseNetwork(object):
         def save_model(self, weights_only=False):
             Save model's parameters or weights only to an h5 file.
             Args:
-                weights_only(bool, optional): Defaults to False. If set to true,
-                    only model's weights will be saved.
+                weights_only(bool, optional): Defaults to False. If set to
+                    true, only model's weights will be saved.
 
         def load_model(self):
             Load a saved model.
@@ -193,19 +194,19 @@ class BaseNetwork(object):
     ```python
     >>> network = EncoderNetwork(verbose=1)
     __________________________________________________________________________________
-    Layer (type)                    Output Shape         Param #     Connected to                     
+    Layer (type)                    Output Shape         Param #     Connected to
     ==================================================================================
-    input_1 (InputLayer)            (None, 105, 105, 1)  0                                            
+    input_1 (InputLayer)            (None, 105, 105, 1)  0
     __________________________________________________________________________________
-    input_2 (InputLayer)            (None, 105, 105, 1)  0                                            
+    input_2 (InputLayer)            (None, 105, 105, 1)  0
     __________________________________________________________________________________
-    sequential (Sequential)         (None, 4096)         10636096    input_1[0][0]                    
-                                                                     input_2[0][0]                    
+    sequential (Sequential)         (None, 4096)         10636096    input_1[0][0]
+                                                                     input_2[0][0]
     __________________________________________________________________________________
-    lambda (Lambda)                 (None, 4096)         0           sequential[1][0]                 
-                                                                     sequential[2][0]                 
+    lambda (Lambda)                 (None, 4096)         0           sequential[1][0]
+                                                                     sequential[2][0]
     __________________________________________________________________________________
-    dense_1 (Dense)                 (None, 1)            4097        lambda[0][0]                     
+    dense_1 (Dense)                 (None, 1)            4097        lambda[0][0]
     ==================================================================================
     Total params: 10,640,193
     Trainable params: 10,640,193
@@ -228,16 +229,17 @@ class BaseNetwork(object):
     # Loss functions for one-shot tasks.
     losses = Loss
 
-    def __init__(self, num_classes=1, **kwargs):
+    def __init__(self, num_classes: int=1, **kwargs):
         """`BaseNetwork.__init__(num_classes=1, **kwargs)`
 
         Args:
-            num_classes (int, optional): Defaults to 1. Number of output classes
-            in the last layer (prediction layer).
+            num_classes (int, optional): Defaults to 1. Number of output
+            classes in the last layer (prediction layer).
 
         Keyword Args:
-            input_shape (tuple, optional): Defaults to (105, 105, 1). Input shape
-                for a single image. Shape in the form: `(width, height, channel)`.
+            input_shape (tuple, optional): Defaults to (105, 105, 1). Input
+                shape for a single image. Shape in the form:
+                `(width, height, channel)`.
 
             lr (float, optional): Defaults to 1e-3. Optimizer's learning rate.
 
@@ -245,14 +247,16 @@ class BaseNetwork(object):
                 progress or relevant  information will not be logged, otherwise
                 relevant information will be logged.
 
-            save_weights_only (bool, optional): Defaults to False. If set to `True`,
-                only model's weights will be saved, otherwise the entire model is
-                saved.
+            save_weights_only (bool, optional): Defaults to False. If set to
+                `True`, only model's weights will be saved, otherwise the
+                entire model is saved.
 
-            optimizer (keras.optimizers.Optimizer, optional): Defaults to keras.optimizers.Adam.
-                Network optimizer. See `keras.Model.compile`
+            optimizer (keras.optimizers.Optimizer, optional): Defaults to
+                keras.optimizers.Adam. Network optimizer.
+                See `keras.Model.compile`
 
-            loss (Network.losses, optional): Defaults to BaseNetwork.losses.binary_crossentropy.
+            loss (Network.losses, optional):
+                Defaults toBaseNetwork.losses.binary_crossentropy.
 
             model_dir (str, optional): Defaults to 'saved/models'. Directory
                 where weights and model is saved.
@@ -269,7 +273,8 @@ class BaseNetwork(object):
         self.lr = kwargs.get('lr', 1e-3)
         self.metrics = kwargs.get('metrics', ['accuracy'])
         self.loss = kwargs.get('loss', BaseNetwork.losses.binary_crossentropy)
-        self.optimizer = kwargs.get('optimizer', keras.optimizers.Adam(lr=self.lr))
+        self.optimizer = kwargs.get('optimizer',
+                                    keras.optimizers.Adam(lr=self.lr))
 
         # Create model directory if it doesn't already exit.
         if not tf.gfile.IsDirectory(self._model_dir):
@@ -277,7 +282,7 @@ class BaseNetwork(object):
 
         # Path to save model's weights.
         save_path = 'weights.h5' if self._save_weights_only else 'network.h5'
-        self._save_path = f'{self._model_dir}/{save_path}'
+        self._save_path = '{}/{}'.format(self._model_dir, save_path)
 
         # Network built as a Keras Model.
         self.is_estimator = False
@@ -298,8 +303,9 @@ class BaseNetwork(object):
         # self._log(f'Network has {n_params:,} parameters.')
 
     def __repr__(self):
-        return (f'BaseNetwork(input_shape={self._input_shape}, loss={self.loss},'
-                f' optimizer={self.optimizer}), metrics={self.metrics}')
+        return ('BaseNetwork(input_shape={}, loss={}, optimizer={}, metrics={}'
+                ')').format(self._input_shape, self.loss,
+                            self.optimizer, self.metrics)
 
     def __str__(self):
         return self.__repr__()
@@ -315,15 +321,16 @@ class BaseNetwork(object):
     def call(self, **kwargs):
         """Calls the model on new inputs.
 
-        In this case `call` just reapplies all ops in the graph to the new inputs
-        (e.g. build a new computational graph from the provided inputs).
+        In this case `call` just reapplies all ops in the graph to the
+        new inputs (e.g. build a new computational graph from the provided
+        inputs).
 
         Args:
             inputs: A tensor or list of tensors.
 
         Keyword Args:
-            training: Boolean or boolean scalar tensor, indicating whether to run
-            the `Network` in training mode or inference mode.
+            training: Boolean or boolean scalar tensor, indicating whether
+            to run the `Network` in training mode or inference mode.
             mask: A mask or list of masks. A mask can be
                 either a tensor or None (no mask).
 
@@ -342,7 +349,8 @@ class BaseNetwork(object):
         of `keras.models.Model` class).
 
         Keyword Args:
-            num_classes (int, optional): Defaults to 1. Number of output classes.
+            num_classes (int, optional): Defaults to 1.
+                Number of output classes.
 
         Raises:
             NotImplementedError: Sub-class must override `build` method.
@@ -358,16 +366,16 @@ class BaseNetwork(object):
         """Train the initialized network/model on some dataset.
 
         Args:
-            train_data (omniglot.Dataset): Training dataset. Must be an instance
-                of the `omniglot.Dataset` class.
+            train_data (omniglot.Dataset): Training dataset.
+                Must be an instance of the `omniglot.Dataset` class.
             valid_data (omniglot.Dataset, optional): Defaults to None.
                 Validation dataset. Must be an instance of the
                 `omniglot.Dataset` class.
             batch_size (int, optional): Defaults to 64. Training & validation
                 mini-batch size.
-            resume_training (bool, optional): Defaults to True. If set to `True`,
-                training will be continued from previously saved h5 file
-                `Network.save_path`.
+            resume_training (bool, optional): Defaults to True.
+                If set to `True`, training will be continued from previously
+                saved h5 file `Network.save_path`.
 
         Keyword Args:
             See `keras.models.Model.fit_generator` for more options.
@@ -401,7 +409,8 @@ class BaseNetwork(object):
                 valid_gen = valid_data.next_batch(batch_size=batch_size)
                 # with validation set.
                 self._model.fit_generator(train_gen, validation_data=valid_gen,
-                                          validation_steps=batch_size, **kwargs)
+                                          validation_steps=batch_size,
+                                          **kwargs)
         except KeyboardInterrupt:
             # When training is unexpectedly stopped!
             self._log('\nTraining interrupted by user!')
@@ -425,7 +434,8 @@ class BaseNetwork(object):
 
         # Saving model isn't implemented yet for subclassed models in Keras.
         # raise NotImplementedError(
-        #     "`keras.save_model` hasn't been implemented for model subclassing."
+        #     ("`keras.save_model` hasn't been implemented for"
+        #      " model subclassing.")
         # )
 
         # Saved model filepath.
@@ -449,8 +459,10 @@ class BaseNetwork(object):
         keras_model = self._model
 
         # Convert keras model to `tf.estimator`.
-        self._model = keras.estimator.model_to_estimator(keras_model=keras_model,
-                                                         model_dir='{self._model_dir}/estimator')
+        self._model = keras.estimator.model_to_estimator(
+            keras_model=keras_model,
+            model_dir='{self._model_dir}/estimator'
+        )
 
         # Current object is now a tf.estimator object.
         self.is_estimator = True
@@ -471,11 +483,13 @@ class BaseNetwork(object):
 
         if weights_only:
             # Save model weights.
-            self._model.save_weights(filepath=self._save_path, save_format='h5')
+            self._model.save_weights(filepath=self._save_path,
+                                     save_format='h5')
         else:
             # Save entire model.
             # self._model.save(filepath=self._save_path)
-            keras.models.save_model(model=self._model, filepath=self._save_path)
+            keras.models.save_model(model=self._model,
+                                    filepath=self._save_path)
 
         # Pretty prints.
         self._log(f'Saved model weights to "{self._save_path}"!\n{"-" * 65}\n')

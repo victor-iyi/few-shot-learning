@@ -33,8 +33,8 @@ class Benchmark(object):
         Args:
             pairs (tuple): Containing image pairs each of dimension
                 (width, height, channel).
-            targets (np.ndarray): array-like - 0 if pairs are of the same class,
-                0 otherwise.
+            targets (np.ndarray): array-like - 0 if pairs are of the
+                same class, 0 otherwise.
 
         Returns:
             int: Prediction based on nearest neighbor lookup. Outputs 1 if
@@ -76,6 +76,7 @@ class Benchmark(object):
             pairs, targets = self.data.one_shot_task(n)
             correct += self.predict(pairs, targets)
         if verbose:
-            print(f'{n:,}-way few-shot task w/ {trials:,} trials = {correct/trials:.2%}')
+            print((f'{n:,}-way few-shot task w/ {trials:,}'
+                   f'trials = {correct/trials:.2%}'))
 
         return correct / trials
