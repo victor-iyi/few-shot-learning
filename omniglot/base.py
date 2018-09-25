@@ -303,9 +303,9 @@ class BaseNetwork(object):
         # self._log(f'Network has {n_params:,} parameters.')
 
     def __repr__(self):
-        return ('BaseNetwork(input_shape={}, loss={}, optimizer={}, metrics={}'
-                ')').format(self._input_shape, self.loss,
-                            self.optimizer, self.metrics)
+        return ('BaseNetwork(input_shape={}, loss={}, optimizer={}, '
+                'metrics={})').format(self._input_shape, self.loss,
+                                      self.optimizer, self.metrics)
 
     def __str__(self):
         return self.__repr__()
