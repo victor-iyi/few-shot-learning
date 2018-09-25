@@ -263,7 +263,7 @@ class Dataset(Data):
         >>> # Training dataset.
         >>> dataset = Dataset(path=train_dir, mode=Dataset.Mode.TRAIN)
         Extracting datasets/compressed/images_background.tar.gz...
-       Successfully extracted to datasets/extracted/images_background
+        Successfully extracted to datasets/extracted/images_background
         Loading cached images & corresponding targets.
         >>>
         >>> # Print dataset object.
@@ -312,6 +312,7 @@ class Dataset(Data):
 
     Attributes:
         cache_dir (str): Directory where files are saved.
+        length (int): Length of dataset, how many images are contained.
         shape (tuple): Shape of dataset. classes x width x height x channel.
         images (np.ndarray): Processed images for all classes.
         targets (np.ndarray): Processed target labels 1 for correct class 0 otherwise.
@@ -349,17 +350,17 @@ class Dataset(Data):
             os.makedirs(self._cache_dir)
 
         if os.path.isdir(path):
-            # Pre-process directory into pickle.
             self._data_dir = path
-            self._images, self._targets = self.create(self._data_dir)
         elif zipfile.is_zipfile(path) or tarfile.is_tarfile(path):
             self._data_dir = Dataset.extract(path, force=force)
-            # Pre-process directory to be pickled.
-            self._images, self._targets = self.create(self._data_dir)
         else:
             raise FileNotFoundError(f'{path} was not found.')
 
-        self.length, self.n_classes, self._width, self._height = self._images.shape
+        # Pre-process directory into pickle (or to be pickled).
+        self._images, self._targets = self.create(self._data_dir)
+
+        # Data dimension & properties.
+        self._length, self.n_classes, self._width, self._height = self._images.shape
         self._channel = 1
 
     def __repr__(self):
@@ -370,7 +371,7 @@ class Dataset(Data):
         return NotImplemented
 
     def __len__(self):
-        return self.length
+        return self._length
 
     @classmethod
     def from_cache(cls, path: str):
@@ -495,18 +496,16 @@ class Dataset(Data):
                 _status = "DONE" if status else "ERROR"
                 self._log(f'{idx:02d}. {_name:<45} {_status}')
 
-                # del _name, _status  # Clear extra memory.
+                del _name, _status  # Clear extra memory.
 
                 # Increment class index.
                 idx += 1
 
         # Images & targets.
-        x, y = np.stack(x), np.vstack(y)
-
-        return x, y
+        return np.stack(x), np.vstack(y)
 
     @utils.to_tensor
-    def get_batch(self, batch_size: int = 128):
+    def get_batch(self, batch_size: int = 128, rate: float=0.5):
         """Get a randomly sampled mini-batch of image pairs and corresponding targets.
 
         Args:
@@ -522,11 +521,13 @@ class Dataset(Data):
         # Shorten usage of image dimension.
         img_dim = self._width, self._height, self._channel
 
-        # Half `batch_size`.
-        half_batch = batch_size // 2
+        # # Half `batch_size`.
+        # # half_batch = batch_size // 2
+        # Split batches to have false positive & positives.
+        half_batch = int(batch_size * rate)
 
         # Randomly sample several classes (alphabet) to use in the batch.
-        categories = np.random.choice(self.length, size=(batch_size,))
+        categories = np.random.choice(self._length, size=(batch_size,))
 
         # Initialize 2 empty arrays for the input image batch.
         # pairs = np.zeros(shape=(2, batch_size, *img_dim))
@@ -556,7 +557,7 @@ class Dataset(Data):
             else:
                 # Add a random number to the category modulo n classes to ensure
                 # 2nd image has different category.
-                cat2 = (cat1 + rand(1, self.n_classes)) % self.length
+                cat2 = (cat1 + rand(1, self.n_classes)) % self._length
             second[i, :, :, :] = self._images[cat2, idx2].reshape(img_dim)
 
         pairs = [first, second]
@@ -583,7 +584,7 @@ class Dataset(Data):
         indices = np.random.randint(0, self.n_classes, size=(n,))
 
         # Pick random character.
-        categories = np.random.randint(self.length, size=(n,))
+        categories = np.random.randint(self._length, size=(n,))
 
         true_cat = categories[0]
         ex1, ex2 = np.random.choice(self.n_classes, size=(2,))
@@ -629,7 +630,7 @@ class Dataset(Data):
                   ' way one-shot learning tasks...', verbose=verbose)
 
         # Number of trials to run.
-        trials = trials or self.length // 2
+        trials = trials or self._length // 2
 
         # Keep track number of correct predictions.
         correct = 0
@@ -730,25 +731,18 @@ class Dataset(Data):
     def _log(self, *args, **kwargs):
         """Logging method helper based on verbosity."""
 
-        verbose = kwargs.setdefault('verbose', self._verbose)
-
         # No logging if verbose is not 'on'.
-        if not verbose:
+        if not kwargs.pop('verbose', self._verbose):
             return
 
         # Handle for callbacks.
-        callback = kwargs.setdefault('callback', None)
-        params = kwargs.setdefault('params', None)
+        callback = kwargs.pop('callback', None)
+        params = kwargs.pop('params', None)
 
         # Call any callbacks if it is callable.
         if callback and callable(callback):
             # Callback with no params or with params.
             callback() if params is None else callback(params)
-
-        # Remove params, verbose & callback keys.
-        kwargs.pop('params')
-        kwargs.pop('verbose')
-        kwargs.pop('callback')
 
         # Log other args & kwargs.
         print(*args, **kwargs)
@@ -773,6 +767,15 @@ class Dataset(Data):
 
         _shape = (self.n_classes, self._width, self._height, self._channel)
         return _shape
+
+    @property
+    def length():
+        """Length of dataset, how many images are contained.
+
+        Returns:
+            int: Length of dataset.
+        """
+        return self._length
 
     @property
     def images(self):

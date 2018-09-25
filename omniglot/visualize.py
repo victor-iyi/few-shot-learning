@@ -58,13 +58,12 @@ class Visualize(object):
 
         # Extract default keyword arguments.
         kwargs.setdefault('cmap', 'gray')
-        smooth = kwargs.setdefault('smooth', False)
+        smooth = kwargs.pop('smooth', False)
 
         # Interpolation type.
         smooth = 'spline16' if smooth else 'nearest'
 
         # Update keyword arguments.
-        kwargs.pop('smooth')
         kwargs.update({"interpolation": smooth})
 
         # Add image to plot.
@@ -98,10 +97,9 @@ class Visualize(object):
 
         # Keyword arguments.
         kwargs.setdefault('cmap', 'gray')
-        smooth = kwargs.setdefault('smooth', True)
+        smooth = kwargs.pop('smooth', True)
 
         # Update keyword arguments by matplotlib.
-        kwargs.pop("smooth")
         kwargs.update({
             # Change interpolation to smooth images.
             "interpolation": 'spline16' if smooth else 'nearest'
