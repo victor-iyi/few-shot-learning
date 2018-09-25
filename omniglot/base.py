@@ -291,7 +291,7 @@ class BaseNetwork(object):
         self._model = self.build(**kwargs)
 
         # TODO: Get layerwise learning rates and momentum annealing scheme
-        # as described in the paper.
+        #       as described in the paper.
         self._model.compile(loss=self.loss, optimizer=self.optimizer,
                             metrics=self.metrics)
 
@@ -527,25 +527,18 @@ class BaseNetwork(object):
     def _log(self, *args, **kwargs):
         """Logging method helper based on verbosity."""
 
-        verbose = kwargs.setdefault('verbose', self._verbose)
-
         # No logging if verbose is not 'on'.
-        if not verbose:
+        if not kwargs.pop('verbose', self._verbose):
             return
 
         # Handle for callbacks.
-        callback = kwargs.setdefault('callback', None)
-        params = kwargs.setdefault('params', None)
+        callback = kwargs.pop('callback', None)
+        params = kwargs.pop('params', None)
 
         # Call any callbacks if it is callable.
         if callback and callable(callback):
             # Callback with no params or with params.
             callback() if params is None else callback(params)
-
-        # Remove params, verbose & callback keys.
-        kwargs.pop('params')
-        kwargs.pop('verbose')
-        kwargs.pop('callback')
 
         # Log other args & kwargs.
         print(*args, **kwargs)
