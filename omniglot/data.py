@@ -510,6 +510,8 @@ class Dataset(Data):
 
         Args:
             batch_size (int, optional): Defaults to 128. Mini-batch size.
+            rate (float, optional): Defaults to 0.5. High rate means more
+                false positives & vice versa.
 
         Returns:
             tuple: image pairs and respective targets.
@@ -521,10 +523,8 @@ class Dataset(Data):
         # Shorten usage of image dimension.
         img_dim = self._width, self._height, self._channel
 
-        # # Half `batch_size`.
-        # # half_batch = batch_size // 2
         # Split batches to have false positive & positives.
-        half_batch = int(batch_size * rate)
+        batch_fraction = int(batch_size * rate)
 
         # Randomly sample several classes (alphabet) to use in the batch.
         categories = np.random.choice(self._length, size=(batch_size,))
@@ -537,7 +537,7 @@ class Dataset(Data):
         # Initialize vector for the targets, and make one half
         # of it '1's, so 2nd half of batch has same class.
         targets = np.zeros(shape=(batch_size, 1), dtype=np.float32)
-        targets[half_batch:] = 1.
+        targets[batch_fraction:] = 1.
 
         for i in range(batch_size):
             # Pick the i'th random class (alphabet).
@@ -552,7 +552,7 @@ class Dataset(Data):
             idx2 = rand(low=0, high=self.n_classes)
 
             # Pick images of same class for 1st half, different for 2nd half.
-            if i >= half_batch:
+            if i >= batch_fraction:
                 cat2 = cat1
             else:
                 # Add a random number to the category modulo n classes to ensure
@@ -570,7 +570,7 @@ class Dataset(Data):
     def one_shot_task(self, n: int):
         """Create image pair for N-way one shot learning task.
 
-        Args:
+        Args:3
             n (int): Number of pairs to generate.
 
         Returns:
