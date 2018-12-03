@@ -43,7 +43,8 @@ class Visualize(object):
 
         Keyword Args:
           cmap (plt.cmap, optional): Defaults to gray.
-          smooth (bool, optional): Defaults to True. Whether to apply smoothening interpolation to image.
+          smooth (bool, optional): Defaults to True. Whether to apply
+            smoothening interpolation to image.
 
           See `matplotlib.pyplot.imshow`.
 
